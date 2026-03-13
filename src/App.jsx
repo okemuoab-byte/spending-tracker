@@ -851,7 +851,7 @@ export default function SpendingTracker() {
                   <Home size={14} className="text-indigo-400"/>
                   <span className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Committed This Month</span>
                 </div>
-                <div className="text-4xl font-black text-indigo-400 mt-2">{fmt(committedThisMonth)}</div>
+                <div className="text-4xl font-black text-indigo-400 mt-2">{fmt(totalFixed)}</div>
                 <p className="text-gray-500 text-xs mt-2">Rent + phone + subs + gym — goes out regardless</p>
               </div>
 
