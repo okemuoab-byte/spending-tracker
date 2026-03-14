@@ -187,8 +187,7 @@ const CAT_COLORS = {
 };
 const INC_COLORS = ["#4ade80","#38bdf8","#60a5fa","#c084fc","#94a3b8","#f9a8d4"];
 
-const fmt  = n => `£${Math.abs(n).toFixed(2)}`;
-const fmtK = n => n >= 1000 ? `£${(n/1000).toFixed(1)}k` : `£${Math.round(n)}`;
+import { fmt, fmtK, CAT_RULES, INC_RULES, autocat, autocatInc } from "./utils/finance.js";
 
 const Tip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -238,28 +237,6 @@ const SUBSCRIPTIONS = [
   { name:"Fitness First + PureGym",monthly:69.00, annual:828.00, icon:Dumbbell,   optional:true,  note:"TWO gyms!" },
 ];
 
-// ── CSV AUTO-CATEGORISATION ───────────────────────────────────────────────────
-const CAT_RULES = [
-  [/THOMAS KNIGHT|RENT|LETTINGS|LANDLORD/i,                                                     "Rent"],
-  [/TESCO|SAINSBURY|ASDA|MORRISONS|LIDL|ALDI|WAITROSE|CO-OP|COOP|OCADO|ICELAND|WHOLE FOODS/i,  "Groceries"],
-  [/TFL |LIME BIKE|TRAINLINE|NATIONAL RAIL|ZIPCAR|OVERGROUND|TUBE |HEATHROW/i,                  "Transport"],
-  [/UBER(?! EATS)/i,                                                                             "Transport"],
-  [/COSTA|STARBUCKS|PRET|CAFFE NERO|DELIVEROO|JUST.?EAT|UBER EATS|MCDONALDS|KFC|PIZZA|NANDO|FLAT IRON|BANCONE|CYNTHIA|GREGGS|WASABI/i, "Eating Out & Cafes"],
-  [/RESTAURANT|CAFE |COFFEE SHOP|SUSHI/i,                                                       "Eating Out & Cafes"],
-  [/SPOTIFY|NETFLIX|APPLE\.COM|AMAZON PRIME|DISNEY\+|LINKEDIN PREMIUM|YOUTUBE PREMIUM|NOW TV/i,"Subscriptions"],
-  [/PUREGYM|FITNESS FIRST|DAVID LLOYD|VIRGIN ACTIVE|NUFFIELD HEALTH/i,                          "Gym & Fitness"],
-  [/^O2 |O2 MOBILE|EE MOBILE|VODAFONE|THREE MOBILE|PHONE BILL|GIFFGAFF/i,                      "Phone Bill"],
-  [/HOSPITAL|BOOTS OPTICIANS|BOOTS PHARMACY|NHS|DENTIST|OPTICIAN|ROYAL FREE|WHITTINGTON|PHARMACY|MEDICAL|CLINIC/i, "Healthcare"],
-  [/AMAZON(?! PRIME)|EBAY|ASOS|ZARA|H&M|PRIMARK|UNIQLO|BOOHOO|MOSS BROS|CALVIN KLEIN|NIKE|ADIDAS|JOHN LEWIS|IKEA|ARGOS/i, "Shopping"],
-  [/SIMMONS| PUB | BAR |CLUB |CINEMA|ODEON|VUE |CINEWORLD|BOWLING|ROXY|BIERKELLER|THEATRE|COMEDY|CONCERT|TED LOCO|KING.?S ARMS|ROWANS/i, "Entertainment & Nights Out"],
-];
-const INC_RULES = [
-  [/NHSBSA|NHS BURSARY/i,               "NHS Bursary"],
-  [/UCL|FRONTIER OPERATIONS|STIPEND/i,  "UCL Stipend"],
-  [/SLC|STUDENT LOAN|STUDENT FINANCE/i, "Student Loan"],
-];
-const autocat    = d => CAT_RULES.find(([r]) => r.test(d))?.[1] ?? "Other";
-const autocatInc = d => INC_RULES.find(([r]) => r.test(d))?.[1] ?? "Family Support";
 
 const parseCSV = (text) => {
   const { data } = Papa.parse(text.trim(), { header: true, skipEmptyLines: true });
@@ -444,10 +421,9 @@ export default function SpendingTracker() {
   const overviewRef                         = useRef(null);
 
   // ── ACTIVE DATA — shadows module-level defaults when CSV is loaded ─────────
-  const MONTHLY_SUMMARY    = importedData?.summary      ?? DEFAULT_MONTHLY_SUMMARY;
-  const MONTHLY_CATEGORIES = importedData?.categories   ?? DEFAULT_MONTHLY_CATEGORIES;
-  const INCOME_BREAKDOWN   = importedData?.income       ?? DEFAULT_INCOME_BREAKDOWN;
-  const ALL_TRANSACTIONS   = useMemo(() => {
+  const MONTHLY_SUMMARY  = importedData?.summary ?? DEFAULT_MONTHLY_SUMMARY;
+  const INCOME_BREAKDOWN = importedData?.income  ?? DEFAULT_INCOME_BREAKDOWN;
+  const ALL_TRANSACTIONS = useMemo(() => {
     const raw = importedData?.transactions ?? DEFAULT_ALL_TRANSACTIONS;
     if (Object.keys(txCatOverrides).length === 0) return raw;
     return raw.map(tx => {
@@ -455,6 +431,18 @@ export default function SpendingTracker() {
       return txCatOverrides[key] ? { ...tx, cat: txCatOverrides[key] } : tx;
     });
   }, [importedData, txCatOverrides]);
+  const MONTHLY_CATEGORIES = useMemo(() => {
+    if (Object.keys(txCatOverrides).length === 0) {
+      return importedData?.categories ?? DEFAULT_MONTHLY_CATEGORIES;
+    }
+    const result = {};
+    ALL_TRANSACTIONS.forEach(tx => {
+      if (tx.dir !== "out") return;
+      if (!result[tx.month]) result[tx.month] = {};
+      result[tx.month][tx.cat] = (result[tx.month][tx.cat] || 0) + Math.round(tx.amount * 100) / 100;
+    });
+    return result;
+  }, [ALL_TRANSACTIONS, importedData, txCatOverrides]);
   const MONTHS             = MONTHLY_SUMMARY.map(m => m.label);
 
   // ── SYNC selMonth WHEN DATA CHANGES ────────────────────────────────────────
@@ -483,7 +471,7 @@ export default function SpendingTracker() {
       Object.entries(mo).forEach(([c, v]) => { t[c] = (t[c] || 0) + v; })
     );
     return Object.entries(t).sort((a, b) => b[1] - a[1]);
-  }, [importedData]);
+  }, [MONTHLY_CATEGORIES]);
 
   // ── DERIVED ──────────────────────────────────────────────────────────────
   const totalFixed      = fixedCosts.reduce((s,c) => s+c.amount, 0);
@@ -513,7 +501,7 @@ export default function SpendingTracker() {
       deltas[k] = (latestCats[k] || 0) - (prevCats[k] || 0);
     });
     return deltas;
-  }, [importedData]);
+  }, [MONTHLY_CATEGORIES]);
 
   const spendingDNA = useMemo(() => {
     const eatOut   = catTotals.find(([c]) => c === "Eating Out & Cafes")?.[1] || 0;
@@ -675,7 +663,7 @@ export default function SpendingTracker() {
 
   const selCats = useMemo(() =>
     Object.entries(MONTHLY_CATEGORIES[selMonth] || {}).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
-  , [selMonth, importedData]);
+  , [selMonth, MONTHLY_CATEGORIES]);
 
   const allCats = useMemo(() => {
     const s = new Set(["All"]);
@@ -910,7 +898,7 @@ export default function SpendingTracker() {
               ))}
             </div>
 
-            <div className="bg-gray-900 rounded-2xl p-5">
+            <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
               <h2 className="text-base font-semibold mb-4">Monthly Income vs Spending – Full Picture</h2>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={MONTHLY_SUMMARY.map(m => ({ month:m.label, Income:m.income, Spending:m.spending, Net:m.net }))} barCategoryGap="25%">
@@ -923,10 +911,10 @@ export default function SpendingTracker() {
                   <Bar dataKey="Spending" fill="#f97316" radius={[5,5,0,0]}/>
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </motion.div>
 
             <div className="grid gap-4" style={{gridTemplateColumns:"1.3fr 1fr"}}>
-              <div className="bg-gray-900 rounded-2xl p-5">
+              <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.07,duration:0.3}}>
                 <h2 className="text-base font-semibold mb-3">Account Balance (month-end)</h2>
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={MONTHLY_SUMMARY.map(m => ({ month:m.label, Balance:m.balanceEnd }))}>
@@ -938,8 +926,8 @@ export default function SpendingTracker() {
                     <Area type="monotone" dataKey="Balance" stroke="#6366f1" fill="#6366f122" strokeWidth={2}/>
                   </AreaChart>
                 </ResponsiveContainer>
-              </div>
-              <div className="bg-gray-900 rounded-2xl p-5">
+              </motion.div>
+              <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.14,duration:0.3}}>
                 <h2 className="text-base font-semibold mb-3">Monthly Net (surplus / deficit)</h2>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={MONTHLY_SUMMARY.map(m => ({ month:m.label, Net:m.net }))}>
@@ -953,7 +941,7 @@ export default function SpendingTracker() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+              </motion.div>
             </div>
 
             <div className="bg-gray-900 rounded-2xl p-5">
@@ -1076,7 +1064,7 @@ export default function SpendingTracker() {
                   </div>
 
                   <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1fr"}}>
-                    <div className="bg-gray-900 rounded-2xl p-5">
+                    <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
                       {!weeklyView ? (
                         <>
                           <h2 className="text-sm font-semibold mb-1">{selMonth} – Spending Breakdown</h2>
@@ -1114,8 +1102,8 @@ export default function SpendingTracker() {
                           </ResponsiveContainer>
                         </>
                       )}
-                    </div>
-                    <div className="bg-gray-900 rounded-2xl p-5">
+                    </motion.div>
+                    <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.07,duration:0.3}}>
                       <h2 className="text-sm font-semibold mb-3">{selMonth} – Income Sources</h2>
                       <ResponsiveContainer width="100%" height={260}>
                         <PieChart>
@@ -1127,7 +1115,7 @@ export default function SpendingTracker() {
                           <Legend formatter={v => <span style={{color:"#9ca3af",fontSize:"11px"}}>{v}</span>}/>
                         </PieChart>
                       </ResponsiveContainer>
-                    </div>
+                    </motion.div>
                   </div>
 
                   <div className="bg-gray-900 rounded-2xl p-5">
@@ -1357,7 +1345,7 @@ export default function SpendingTracker() {
               </div>
             </div>
 
-            <div className="bg-gray-900 rounded-2xl p-5">
+            <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
               <h2 className="text-base font-semibold mb-1 flex items-center gap-2"><TrendingUp size={15} className="text-gray-400"/> Balance Projection</h2>
               <p className="text-gray-500 text-xs mb-4">Historical actuals + forecast from Feb '26. Starting balance: £2,223.62</p>
               <ResponsiveContainer width="100%" height={260}>
@@ -1371,7 +1359,7 @@ export default function SpendingTracker() {
                   <Area type="monotone" dataKey="Balance" stroke="#6366f1" fill="#6366f122" strokeWidth={2} name="Balance"/>
                 </ComposedChart>
               </ResponsiveContainer>
-            </div>
+            </motion.div>
 
             <div className="bg-gray-900 rounded-2xl overflow-hidden">
               <div className="px-5 py-3 border-b border-gray-800">
@@ -1424,7 +1412,7 @@ export default function SpendingTracker() {
           <motion.div key="income"
             initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
             transition={{duration:0.18}} className="space-y-5">
-            <div className="bg-gray-900 rounded-2xl p-5">
+            <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
               <h2 className="text-base font-semibold mb-4">Income Sources by Month</h2>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={MONTHLY_SUMMARY.map(m => ({ month:m.label, ...INCOME_BREAKDOWN[m.label] }))} barCategoryGap="20%">
@@ -1438,7 +1426,7 @@ export default function SpendingTracker() {
                   ))}
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </motion.div>
 
             <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1fr"}}>
               <div className="bg-gray-900 rounded-2xl p-5">
@@ -1706,7 +1694,7 @@ export default function SpendingTracker() {
                       </div>
                     </div>
 
-                    <div className="bg-gray-800/40 rounded-2xl p-5">
+                    <motion.div className="bg-gray-800/40 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
                       <h3 className="text-sm font-semibold mb-1 text-white">Balance Trajectory: With vs. Without Purchase</h3>
                       <p className="text-xs text-gray-500 mb-4">Dashed grey = your balance if you don't buy it. Coloured line = your balance if you do. The circle marks the moment of purchase.</p>
                       <ResponsiveContainer width="100%" height={220}>
@@ -1743,7 +1731,7 @@ export default function SpendingTracker() {
                           <AlertTriangle size={12} className="inline mr-1"/> Balance stays below £500 buffer within this window. Consider a higher-income month or spreading the cost.
                         </p>
                       )}
-                    </div>
+                    </motion.div>
                   </div>
                 );
               })()}
