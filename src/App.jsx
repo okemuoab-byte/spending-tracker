@@ -223,6 +223,7 @@ const DEFAULT_VAR = [
 ];
 const FORECAST_MONTHS = ["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const FORECAST_MONTH_NUMS = [2,3,4,5,6,7,8,9,10,11,12];
+const MO_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const THEMES = [
   { id:"indigo",   label:"Indigo",   color:"#6366f1" },
@@ -423,7 +424,9 @@ export default function SpendingTracker() {
   const [importPreview, setImportPreview]   = useState(null);
   const [otherDrillMonth, setOtherDrillMonth] = useState(null);
   const [weeklyView, setWeeklyView]         = useState(false);
-  const [txCatOverrides, setTxCatOverrides] = useState({});
+  const [txCatOverrides, setTxCatOverrides] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("catOverrides") ?? "{}"); } catch { return {}; }
+  });
   const [bannerDismissed, setBannerDismissed] = useState(() => !!localStorage.getItem("bannerDismissed"));
   const csvInputRef                         = useRef(null);
   const overviewRef                         = useRef(null);
@@ -572,7 +575,6 @@ export default function SpendingTracker() {
   }, [runway, historicIncome, importedData]);
 
   // ── FORECAST ─────────────────────────────────────────────────────────────
-  const MO_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const lastEntry    = MONTHLY_SUMMARY[MONTHLY_SUMMARY.length - 1];
   const lastMoIdx    = lastEntry ? MO_ABBR.indexOf(lastEntry.label.split(" ")[0]) : 0;
   const lastYear     = lastEntry ? 2000 + parseInt(lastEntry.label.split("'")[1].trim()) : 2026;
@@ -751,6 +753,7 @@ export default function SpendingTracker() {
       }
     });
     setTxCatOverrides(newOverrides);
+    try { localStorage.setItem("catOverrides", JSON.stringify(newOverrides)); } catch {}
   };
 
   const TABS = [
@@ -1701,7 +1704,7 @@ export default function SpendingTracker() {
                 </div>
                 <div>
                   <label className="text-xs text-gray-400 mb-2 block">When? (month in 2026)</label>
-                  <input type="month" min="2026-02" max="2026-12" value={affordabilityDate}
+                  <input type="month" min={`${fcStartYear}-${String(fcStartIdx + 1).padStart(2,"0")}`} max={`${fcStartYear + 1}-12`} value={affordabilityDate}
                     onChange={e => setAffordabilityDate(e.target.value)}
                     className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
                 </div>
@@ -2063,7 +2066,7 @@ export default function SpendingTracker() {
 
                 {importedData && (
                   <button
-                    onClick={() => { setImportedData(null); setImportPreview(null); setShowImport(false); setSelMonth("Jan '26"); localStorage.removeItem("spendingData"); }}
+                    onClick={() => { setImportedData(null); setImportPreview(null); setShowImport(false); setSelMonth("Jan '26"); localStorage.removeItem("spendingData"); localStorage.removeItem("catOverrides"); setTxCatOverrides({}); }}
                     className="mt-3 w-full py-2 rounded-xl text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-red-700 hover:bg-red-900/20 transition-all">
                     ↩ Revert to demo data
                   </button>
@@ -2107,6 +2110,7 @@ export default function SpendingTracker() {
                       setImportedData(importPreview);
                       try { localStorage.setItem("spendingData", JSON.stringify(importPreview)); } catch {}
                       setTxCatOverrides({});
+                      localStorage.removeItem("catOverrides");
                       setImportPreview(null);
                       setShowImport(false);
                       const lastMonth = importPreview.summary[importPreview.summary.length - 1]?.label;
