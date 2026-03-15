@@ -312,6 +312,35 @@ const parseCSV = (text) => {
   };
 };
 
+// ── MERGE IMPORTED DATA WITH EXISTING STORED DATA ────────────────────────────
+const mergeData = (existing, incoming) => {
+  if (!existing) return incoming;
+
+  // Summaries: incoming overwrites same month label, otherwise keep both
+  const summaryMap = {};
+  [...existing.summary, ...incoming.summary].forEach(m => { summaryMap[m.label] = m; });
+  const summary = Object.values(summaryMap).sort((a, b) => {
+    const idx = l => { const [mo, yr] = l.split(" '"); return parseInt(yr) * 12 + MO_ABBR.indexOf(mo); };
+    return idx(a.label) - idx(b.label);
+  });
+
+  // Categories + income: incoming overwrites same month key
+  const categories = { ...existing.categories, ...incoming.categories };
+  const income     = { ...existing.income,     ...incoming.income };
+
+  // Transactions: deduplicate by date+desc+amount, sort chronologically
+  const seen = new Set();
+  const transactions = [];
+  [...existing.transactions, ...incoming.transactions].forEach(tx => {
+    const key = `${tx.date}:${tx.desc}:${tx.amount}`;
+    if (!seen.has(key)) { seen.add(key); transactions.push(tx); }
+  });
+  transactions.sort((a, b) => a.date.localeCompare(b.date));
+
+  return { summary, categories, income, transactions,
+           currentBalance: incoming.currentBalance, monthCount: summary.length };
+};
+
 // ── ANIMATED NUMBER ──────────────────────────────────────────────────────────
 function AnimatedNumber({ value, format = fmt }) {
   const [display, setDisplay] = useState(value);
@@ -2074,31 +2103,53 @@ export default function SpendingTracker() {
               </>
             ) : (
               <div className="space-y-4">
-                <div className="bg-emerald-900/20 border border-emerald-700 rounded-xl p-4">
-                  <p className="text-emerald-400 font-semibold mb-3 flex items-center gap-2"><Check size={14}/> CSV parsed successfully</p>
-                  <div className="grid gap-2" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
-                    {[
-                      { label:"Months",       value: importPreview.monthCount },
-                      { label:"Transactions", value: importPreview.transactions.length },
-                      { label:"Latest Balance", value: fmt(importPreview.currentBalance) },
-                    ].map(s => (
-                      <div key={s.label} className="bg-gray-800 rounded-xl p-3 text-center">
-                        <div className="text-xl font-bold text-white">{s.value}</div>
-                        <div className="text-xs text-gray-400 mt-0.5">{s.label}</div>
+                {(() => {
+                  const existingLabels = new Set((importedData?.summary ?? []).map(m => m.label));
+                  const newMonths = importPreview.summary.filter(m => !existingLabels.has(m.label));
+                  const dupMonths = importPreview.summary.filter(m => existingLabels.has(m.label));
+                  const merged = mergeData(importedData, importPreview);
+                  return (
+                    <div className="bg-emerald-900/20 border border-emerald-700 rounded-xl p-4">
+                      <p className="text-emerald-400 font-semibold mb-3 flex items-center gap-2"><Check size={14}/>
+                        {importedData
+                          ? `${newMonths.length} new month${newMonths.length !== 1 ? "s" : ""} detected — ${dupMonths.length} already stored`
+                          : "CSV parsed successfully"}
+                      </p>
+                      <div className="grid gap-2 mb-3" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
+                        {[
+                          { label:"Total Months",   value: merged.monthCount },
+                          { label:"Transactions",   value: merged.transactions.length },
+                          { label:"Latest Balance", value: fmt(importPreview.currentBalance) },
+                        ].map(s => (
+                          <div key={s.label} className="bg-gray-800 rounded-xl p-3 text-center">
+                            <div className="text-xl font-bold text-white">{s.value}</div>
+                            <div className="text-xs text-gray-400 mt-0.5">{s.label}</div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 grid gap-1 text-xs text-gray-400">
-                    {importPreview.summary.map(m => (
-                      <div key={m.label} className="flex justify-between">
-                        <span className="text-gray-300">{m.label}</span>
-                        <span className={m.net >= 0 ? "text-emerald-400" : "text-red-400"}>
-                          {m.net >= 0 ? "+" : ""}{fmt(m.net)}
-                        </span>
+                      <div className="grid gap-1 text-xs">
+                        {importPreview.summary.map(m => {
+                          const isNew = !existingLabels.has(m.label);
+                          return (
+                            <div key={m.label} className="flex justify-between items-center">
+                              <span className="flex items-center gap-1.5">
+                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isNew ? "bg-emerald-400" : "bg-gray-600"}`}/>
+                                <span className={isNew ? "text-gray-300" : "text-gray-600"}>{m.label}</span>
+                                {isNew && <span className="text-emerald-600 text-xs">new</span>}
+                              </span>
+                              <span className={isNew ? (m.net >= 0 ? "text-emerald-400" : "text-red-400") : "text-gray-700"}>
+                                {m.net >= 0 ? "+" : ""}{fmt(m.net)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {importedData && existingLabels.size > importPreview.summary.length && (
+                          <p className="text-gray-600 text-xs mt-1">{existingLabels.size - dupMonths.length} previously stored month(s) kept unchanged</p>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex gap-3">
                   <button onClick={() => setImportPreview(null)}
@@ -2107,17 +2158,18 @@ export default function SpendingTracker() {
                   </button>
                   <button
                     onClick={() => {
-                      setImportedData(importPreview);
-                      try { localStorage.setItem("spendingData", JSON.stringify(importPreview)); } catch {}
+                      const merged = mergeData(importedData, importPreview);
+                      setImportedData(merged);
+                      try { localStorage.setItem("spendingData", JSON.stringify(merged)); } catch {}
                       setTxCatOverrides({});
                       localStorage.removeItem("catOverrides");
                       setImportPreview(null);
                       setShowImport(false);
-                      const lastMonth = importPreview.summary[importPreview.summary.length - 1]?.label;
+                      const lastMonth = merged.summary[merged.summary.length - 1]?.label;
                       if (lastMonth) setSelMonth(lastMonth);
                     }}
                     className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all">
-                    Load My Data →
+                    {importedData ? `Merge ${importPreview.summary.filter(m => !new Set(importedData.summary.map(x => x.label)).has(m.label)).length} new month(s) →` : "Load My Data →"}
                   </button>
                 </div>
               </div>
