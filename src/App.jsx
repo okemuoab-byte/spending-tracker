@@ -424,6 +424,7 @@ export default function SpendingTracker() {
   const [otherDrillMonth, setOtherDrillMonth] = useState(null);
   const [weeklyView, setWeeklyView]         = useState(false);
   const [txCatOverrides, setTxCatOverrides] = useState({});
+  const [bannerDismissed, setBannerDismissed] = useState(() => !!localStorage.getItem("bannerDismissed"));
   const csvInputRef                         = useRef(null);
   const overviewRef                         = useRef(null);
 
@@ -451,6 +452,15 @@ export default function SpendingTracker() {
     return result;
   }, [ALL_TRANSACTIONS, importedData, txCatOverrides]);
   const MONTHS             = MONTHLY_SUMMARY.map(m => m.label);
+
+  // ── RESTORE FROM localStorage ON MOUNT ──────────────────────────────────
+  useEffect(() => {
+    const saved = localStorage.getItem("spendingData");
+    if (saved) {
+      try { setImportedData(JSON.parse(saved)); }
+      catch { localStorage.removeItem("spendingData"); }
+    }
+  }, []);
 
   // ── SYNC selMonth WHEN DATA CHANGES ────────────────────────────────────────
   useEffect(() => {
@@ -530,7 +540,7 @@ export default function SpendingTracker() {
     }
     return { archetype, trait, roast,
       socialPct: socialPct.toFixed(1),
-      bestMonth: bestMonth ? `${bestMonth.label} — lowest spend, positive net` : "",
+      bestMonth: bestMonth ? `${bestMonth.label} — best net +${fmt(bestMonth.net)}` : "",
       worstMonth: worstMonth ? `${worstMonth.label} — only ${fmt(worstMonth.income)} in, ${fmt(worstMonth.spending)} out` : "",
     };
   }, [catTotals, historicSpend]);
@@ -562,22 +572,31 @@ export default function SpendingTracker() {
   }, [runway, historicIncome, importedData]);
 
   // ── FORECAST ─────────────────────────────────────────────────────────────
+  const MO_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const lastEntry    = MONTHLY_SUMMARY[MONTHLY_SUMMARY.length - 1];
+  const lastMoIdx    = lastEntry ? MO_ABBR.indexOf(lastEntry.label.split(" ")[0]) : 0;
+  const lastYear     = lastEntry ? 2000 + parseInt(lastEntry.label.split("'")[1].trim()) : 2026;
+  const fcStartIdx   = (lastMoIdx + 1) % 12;
+  const fcStartYear  = lastMoIdx === 11 ? lastYear + 1 : lastYear;
+
   const forecastData = useMemo(() => {
     let balance = currentBalance;
-    return FORECAST_MONTHS.slice(0, horizonMonths).map(m => {
+    return Array.from({ length: horizonMonths }, (_, idx) => {
+      const mIdx = (fcStartIdx + idx) % 12;
+      const yr   = fcStartYear + Math.floor((fcStartIdx + idx) / 12);
       const transportTarget = varCosts.find(c => c.id==="transport")?.amount || 172.50;
       const transportActual = injuryActive ? 463 : transportTarget;
       const adjusted = totalProjected - transportTarget + transportActual;
       balance = balance + monthlyIncome - adjusted;
       return {
-        month: `${m} '26`,
+        month: `${MO_ABBR[mIdx]} '${String(yr).slice(2)}`,
         Income: monthlyIncome,
         Spending: Math.round(adjusted),
         Net: Math.round(monthlyIncome - adjusted),
         Balance: Math.round(balance),
       };
     });
-  }, [totalProjected, monthlyIncome, injuryActive, varCosts, horizonMonths, currentBalance]);
+  }, [totalProjected, monthlyIncome, injuryActive, varCosts, horizonMonths, currentBalance, fcStartIdx, fcStartYear]);
 
   const balanceBridge = [
     ...MONTHLY_SUMMARY.map(m => ({ label:m.label, Balance:Math.round(m.balanceEnd), actual:true })),
@@ -596,8 +615,7 @@ export default function SpendingTracker() {
     const purchaseYear  = parseInt(parts[0]);
     const purchaseMonthNum = parseInt(parts[1]); // 1-based
 
-    // Only simulate within 2026
-    if (purchaseYear !== 2026 || purchaseMonthNum < 2 || purchaseMonthNum > 12) return null;
+    if (purchaseMonthNum < 1 || purchaseMonthNum > 12) return null;
 
     const transportTarget = varCosts.find(c => c.id==="transport")?.amount || 172.50;
     const transportActual = injuryActive ? 463 : transportTarget;
@@ -755,7 +773,7 @@ export default function SpendingTracker() {
   return (
     <div className="min-h-screen bg-gray-950 text-white p-4" data-theme={themeId}>
       {/* STICKY BALANCE TICKER */}
-      <div className="fixed top-4 right-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl px-4 py-3 shadow-xl border border-indigo-500/50 z-50">
+      <div className="hidden sm:block fixed top-4 right-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl px-4 py-3 shadow-xl border border-indigo-500/50 z-50">
         <div className="flex items-center gap-1.5 mb-0.5">
           <Wallet size={11} className="text-white/60"/>
           <span className="text-xs text-white/70 font-medium uppercase tracking-wide">Balance</span>
@@ -836,7 +854,42 @@ export default function SpendingTracker() {
             initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
             transition={{duration:0.18}} className="space-y-5">
 
-            {/* ── LEFT TO SPEND + COMMITTED (stolen from Monzo / Emma) ── */}
+            {!importedData && !bannerDismissed && (
+              <div className="bg-gradient-to-br from-indigo-950 to-purple-950 border border-indigo-700/50 rounded-2xl p-6 shadow-xl">
+                <h2 className="text-xl font-bold text-white mb-1">Welcome to Spending Tracker</h2>
+                <p className="text-gray-400 text-sm mb-5">Visualise your real bank spending — import a CSV and instantly see where your money goes, forecast your balance, and track goals.</p>
+                <div className="flex items-center gap-3 mb-6 flex-wrap">
+                  {[
+                    { step:"1", label:"Import", sub:"Drop your bank CSV" },
+                    { step:"2", label:"Explore", sub:"Charts auto-populate" },
+                    { step:"3", label:"Plan", sub:"Forecast & set goals" },
+                  ].map((s, i) => (
+                    <div key={s.step} className="flex items-center gap-3">
+                      {i > 0 && <ChevronRight size={16} className="text-gray-600 flex-shrink-0"/>}
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">{s.step}</div>
+                        <div>
+                          <div className="text-white font-semibold text-sm">{s.label}</div>
+                          <div className="text-gray-500 text-xs">{s.sub}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-4">
+                  <button onClick={() => setShowImport(true)}
+                    className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-lg">
+                    Import Your CSV
+                  </button>
+                  <button onClick={() => { setBannerDismissed(true); localStorage.setItem("bannerDismissed","1"); }}
+                    className="text-gray-500 hover:text-gray-300 text-sm transition-all">
+                    Continue with sample data →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── LEFT TO SPEND + COMMITTED ── */}
             <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
               {/* Hero: Left to Spend */}
               <div className="bg-gradient-to-br from-emerald-900 to-teal-900 rounded-2xl p-5 border border-emerald-700/40 shadow-xl">
@@ -1362,7 +1415,7 @@ export default function SpendingTracker() {
 
             <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
               <h2 className="text-base font-semibold mb-1 flex items-center gap-2"><TrendingUp size={15} className="text-gray-400"/> Balance Projection</h2>
-              <p className="text-gray-500 text-xs mb-4">Historical actuals + forecast from {FORECAST_MONTHS[0]} '{String(new Date().getFullYear()).slice(2)}. Starting balance: {fmt(currentBalance)}</p>
+              <p className="text-gray-500 text-xs mb-4">Historical actuals + forecast from {forecastData[0]?.month ?? "—"}. Starting balance: {fmt(currentBalance)}</p>
               <ResponsiveContainer width="100%" height={260}>
                 <ComposedChart data={balanceBridge}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
@@ -1378,7 +1431,7 @@ export default function SpendingTracker() {
 
             <div className="bg-gray-900 rounded-2xl overflow-hidden">
               <div className="px-5 py-3 border-b border-gray-800">
-                <h2 className="text-sm font-semibold">Month-by-Month Forecast (from Feb '26)</h2>
+                <h2 className="text-sm font-semibold">Month-by-Month Forecast (from {forecastData[0]?.month ?? "—"})</h2>
               </div>
               <div className="divide-y divide-gray-800/50">
                 <div className="grid text-xs font-semibold text-gray-500 uppercase px-5 py-2"
@@ -1525,7 +1578,8 @@ export default function SpendingTracker() {
                 const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
                 const [monthStr, yearStr] = goal.date?.split(" ") ?? ["", ""];
                 const monthIdx = monthNames.indexOf(monthStr);
-                const monthsAway = monthIdx === -1 ? 0 : Math.max(0, (parseInt(yearStr) - 2026) * 12 + (monthIdx - 2)); // from Mar 2026
+                const now = new Date();
+                const monthsAway = monthIdx === -1 ? 0 : Math.max(0, (parseInt(yearStr) - now.getFullYear()) * 12 + (monthIdx - now.getMonth()));
                 const stillNeeded = Math.max(0, goal.target - goal.saved);
                 const monthlyNeeded = monthsAway > 0 ? stillNeeded / monthsAway : stillNeeded;
                 const isAchievable = monthlyNeeded <= Math.max(projectedNet, 0) + 1;
@@ -2009,7 +2063,7 @@ export default function SpendingTracker() {
 
                 {importedData && (
                   <button
-                    onClick={() => { setImportedData(null); setImportPreview(null); setShowImport(false); setSelMonth("Jan '26"); }}
+                    onClick={() => { setImportedData(null); setImportPreview(null); setShowImport(false); setSelMonth("Jan '26"); localStorage.removeItem("spendingData"); }}
                     className="mt-3 w-full py-2 rounded-xl text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-red-700 hover:bg-red-900/20 transition-all">
                     ↩ Revert to demo data
                   </button>
@@ -2051,6 +2105,7 @@ export default function SpendingTracker() {
                   <button
                     onClick={() => {
                       setImportedData(importPreview);
+                      try { localStorage.setItem("spendingData", JSON.stringify(importPreview)); } catch {}
                       setTxCatOverrides({});
                       setImportPreview(null);
                       setShowImport(false);
