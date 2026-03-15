@@ -13,7 +13,7 @@ import {
   ShoppingCart, Music, Dumbbell, Tv, Smartphone, Package, Home, Bus,
   UtensilsCrossed, Stethoscope, Shield, Plane, Laptop, GraduationCap,
   Users, Landmark, Gamepad2, Briefcase, ShoppingBag, Lock, Radio,
-  Timer, Folder, Search, Train, Film, Activity, Cloud, X, Check
+  Timer, Folder, Search, Train, Film, Cloud, X, Check
 } from "lucide-react";
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -61,9 +61,9 @@ const DEFAULT_ALL_TRANSACTIONS = [
   { date:"2025-06-02", desc:"Costa Coffee",                cat:"Eating Out & Cafes",  amount:6.49,   dir:"out", month:"Jun '25" },
   { date:"2025-06-02", desc:"Royal Free London",           cat:"Healthcare",          amount:21.22,  dir:"out", month:"Jun '25" },
   { date:"2025-06-09", desc:"Moss Bros Oxford St",         cat:"Shopping",            amount:49.95,  dir:"out", month:"Jun '25" },
-  { date:"2025-06-09", desc:"Trace Green",                 cat:"Personal Transfers",  amount:20.00,  dir:"out", month:"Jun '25" },
-  { date:"2025-06-09", desc:"Carlene Bronn",               cat:"Personal Transfers",  amount:45.00,  dir:"out", month:"Jun '25" },
-  { date:"2025-06-03", desc:"Arinze Okemuo (transfer in)", cat:"Family Support",      amount:340.55, dir:"in",  month:"Jun '25" },
+  { date:"2025-06-09", desc:"Friend Transfer",              cat:"Personal Transfers",  amount:20.00,  dir:"out", month:"Jun '25" },
+  { date:"2025-06-09", desc:"Friend Transfer",             cat:"Personal Transfers",  amount:45.00,  dir:"out", month:"Jun '25" },
+  { date:"2025-06-03", desc:"Family Transfer (Jun)",       cat:"Family Support",      amount:340.55, dir:"in",  month:"Jun '25" },
   { date:"2025-06-15", desc:"TfL / LIME (transport)",      cat:"Transport",           amount:248.26, dir:"out", month:"Jun '25" },
   { date:"2025-06-21", desc:"Groceries (Jun total)",       cat:"Groceries",           amount:197.56, dir:"out", month:"Jun '25" },
   { date:"2025-06-28", desc:"Eating Out (Jun total)",      cat:"Eating Out & Cafes",  amount:167.77, dir:"out", month:"Jun '25" },
@@ -106,7 +106,7 @@ const DEFAULT_ALL_TRANSACTIONS = [
   { date:"2025-10-03", desc:"NHSBSA – NHS Bursary",        cat:"NHS Bursary",         amount:1537.00,dir:"in",  month:"Oct '25" },
   { date:"2025-10-03", desc:"UCL Stipend / SLC",           cat:"Stipend / Grants",    amount:1575.45,dir:"in",  month:"Oct '25" },
   { date:"2025-10-01", desc:"Family Support (Oct)",        cat:"Family Support",      amount:525.00, dir:"in",  month:"Oct '25" },
-  { date:"2025-10-02", desc:"Carter (income)",             cat:"Other Income",        amount:134.36, dir:"in",  month:"Oct '25" },
+  { date:"2025-10-02", desc:"Other Income (Oct)",          cat:"Other Income",        amount:134.36, dir:"in",  month:"Oct '25" },
   { date:"2025-10-01", desc:"Apple.com/bill",              cat:"Subscriptions",       amount:19.99,  dir:"out", month:"Oct '25" },
   { date:"2025-10-09", desc:"Apple.com/bill (2nd)",        cat:"Subscriptions",       amount:8.99,   dir:"out", month:"Oct '25" },
   { date:"2025-10-06", desc:"Rowans Ten Pin Bowling",      cat:"Entertainment & Nights Out", amount:33.40, dir:"out", month:"Oct '25" },
@@ -125,7 +125,7 @@ const DEFAULT_ALL_TRANSACTIONS = [
   { date:"2025-11-03", desc:"Thomas Knight (Rent)",        cat:"Rent",                amount:975.00, dir:"out", month:"Nov '25" },
   { date:"2025-11-03", desc:"Family Support (Nov)",        cat:"Family Support",      amount:493.81, dir:"in",  month:"Nov '25" },
   { date:"2025-11-06", desc:"UCL Stipend (Nov)",           cat:"Stipend / Grants",    amount:300.00, dir:"in",  month:"Nov '25" },
-  { date:"2025-11-03", desc:"Arinze Okemuo (in)",          cat:"Family Support",      amount:150.00, dir:"in",  month:"Nov '25" },
+  { date:"2025-11-03", desc:"Family Transfer (Nov)",       cat:"Family Support",      amount:150.00, dir:"in",  month:"Nov '25" },
   { date:"2025-11-03", desc:"Simmons Bars (3 charges)",    cat:"Entertainment & Nights Out", amount:78.50, dir:"out", month:"Nov '25" },
   { date:"2025-11-03", desc:"Uber Trip",                   cat:"Transport",           amount:23.99,  dir:"out", month:"Nov '25" },
   { date:"2025-11-03", desc:"HD Cutz (haircut)",           cat:"Entertainment & Nights Out", amount:36.00, dir:"out", month:"Nov '25" },
@@ -161,7 +161,7 @@ const DEFAULT_ALL_TRANSACTIONS = [
   { date:"2026-01-02", desc:"Other Income (Jan)",          cat:"Other Income",        amount:500.00, dir:"in",  month:"Jan '26" },
   { date:"2026-01-05", desc:"LUL Travelcard (monthly)",    cat:"Transport",           amount:172.50, dir:"out", month:"Jan '26" },
   { date:"2026-01-05", desc:"Uber Trip",                   cat:"Transport",           amount:11.93,  dir:"out", month:"Jan '26" },
-  { date:"2026-01-05", desc:"Trace Green",                 cat:"Personal Transfers",  amount:25.00,  dir:"out", month:"Jan '26" },
+  { date:"2026-01-05", desc:"Friend Transfer",             cat:"Personal Transfers",  amount:25.00,  dir:"out", month:"Jan '26" },
   { date:"2026-01-02", desc:"Amazon Prime",                cat:"Subscriptions",       amount:4.49,   dir:"out", month:"Jan '26" },
   { date:"2026-01-02", desc:"Apple.com/bill",              cat:"Subscriptions",       amount:19.99,  dir:"out", month:"Jan '26" },
   { date:"2026-01-08", desc:"Apple.com/bill (2nd)",        cat:"Subscriptions",       amount:8.99,   dir:"out", month:"Jan '26" },
@@ -458,8 +458,8 @@ export default function SpendingTracker() {
   const [fixedCosts, setFixedCosts]         = useState(DEFAULT_FIXED);
   const [varCosts, setVarCosts]             = useState(DEFAULT_VAR);
   const [monthlyIncome, setMonthlyIncome]   = useState(2200);
-  const [injuryActive, setInjuryActive]     = useState(false);
   const [horizonMonths, setHorizonMonths]   = useState(6);
+  const [planView, setPlanView]             = useState("forecast");
   const [goals, setGoals] = useState(() => {
     const saved = (() => { try { return JSON.parse(localStorage.getItem("goalSaved") ?? "{}"); } catch { return {}; } })();
     return [
@@ -650,8 +650,7 @@ export default function SpendingTracker() {
       const mIdx = (fcStartIdx + idx) % 12;
       const yr   = fcStartYear + Math.floor((fcStartIdx + idx) / 12);
       const transportTarget = varCosts.find(c => c.id==="transport")?.amount || 172.50;
-      const transportActual = injuryActive ? 463 : transportTarget;
-      const adjusted = totalProjected - transportTarget + transportActual;
+      const adjusted = totalProjected;
       balance = balance + monthlyIncome - adjusted;
       return {
         month: `${MO_ABBR[mIdx]} '${String(yr).slice(2)}`,
@@ -661,7 +660,7 @@ export default function SpendingTracker() {
         Balance: Math.round(balance),
       };
     });
-  }, [totalProjected, monthlyIncome, injuryActive, varCosts, horizonMonths, currentBalance, fcStartIdx, fcStartYear]);
+  }, [totalProjected, monthlyIncome, varCosts, horizonMonths, currentBalance, fcStartIdx, fcStartYear]);
 
   const balanceBridge = [
     ...MONTHLY_SUMMARY.map(m => ({ label:m.label, Balance:Math.round(m.balanceEnd), actual:true })),
@@ -682,9 +681,7 @@ export default function SpendingTracker() {
 
     if (purchaseMonthNum < 1 || purchaseMonthNum > 12) return null;
 
-    const transportTarget = varCosts.find(c => c.id==="transport")?.amount || 172.50;
-    const transportActual = injuryActive ? 463 : transportTarget;
-    const monthlySpend    = totalProjected - transportTarget + transportActual;
+    const monthlySpend    = totalProjected;
     const monthlyNet      = monthlyIncome - monthlySpend;
 
     let balBase = currentBalance;
@@ -740,7 +737,7 @@ export default function SpendingTracker() {
       spreadMonthlyExtra,
       balanceAfterPurchase: Math.round(currentBalance + monthlyNet - amt),
     };
-  }, [affordabilityAmount, affordabilityDate, totalProjected, monthlyIncome, injuryActive, varCosts, spreadMonths, currentBalance]);
+  }, [affordabilityAmount, affordabilityDate, totalProjected, monthlyIncome, varCosts, spreadMonths, currentBalance]);
 
   // ── SUBSCRIPTION SAVINGS ──────────────────────────────────────────────────
   const cancelledAnnualSavings = useMemo(() => {
@@ -785,6 +782,53 @@ export default function SpendingTracker() {
       .sort((a, b) => parseInt(a[0].slice(1)) - parseInt(b[0].slice(1)))
       .map(([week, Spending]) => ({ week, Spending: Math.round(Spending * 100) / 100 }));
   }, [selMonth, ALL_TRANSACTIONS]);
+
+  // ── LAST MONTH REVIEW ────────────────────────────────────────────────────
+  const lastMonthReview = useMemo(() => {
+    const lastMo = MONTHLY_SUMMARY[MONTHLY_SUMMARY.length - 1];
+    if (!lastMo) return null;
+    const cats = MONTHLY_CATEGORIES[lastMo.label] || {};
+    const budgetMap = {};
+    [...fixedCosts, ...varCosts].forEach(c => {
+      // Match budget items to category names heuristically
+      if (c.id === "rent")       budgetMap["Rent"] = c.amount;
+      if (c.id === "groceries")  budgetMap["Groceries"] = c.amount;
+      if (c.id === "transport")  budgetMap["Transport"] = c.amount;
+      if (c.id === "eatingout")  budgetMap["Eating Out & Cafes"] = c.amount;
+      if (c.id === "entertain")  budgetMap["Entertainment & Nights Out"] = c.amount;
+      if (c.id === "shopping")   budgetMap["Shopping"] = c.amount;
+      if (c.id === "gym")        budgetMap["Gym & Fitness"] = c.amount;
+      if (c.id === "phone")      budgetMap["Phone Bill"] = c.amount;
+    });
+    const comparisons = Object.entries(budgetMap).map(([cat, budget]) => {
+      const actual = cats[cat] || 0;
+      return { cat, budget, actual, diff: actual - budget, over: actual > budget };
+    }).sort((a, b) => b.diff - a.diff);
+    const onBudget = comparisons.filter(c => !c.over).length;
+    return { label: lastMo.label, income: lastMo.income, spending: lastMo.spending, net: lastMo.net, comparisons, onBudget, total: comparisons.length };
+  }, [MONTHLY_SUMMARY, MONTHLY_CATEGORIES, fixedCosts, varCosts]);
+
+  // ── BUDGET PATTERNS (consistency tracking) ───────────────────────────────
+  const budgetPatterns = useMemo(() => {
+    const budgetMap = {};
+    [...fixedCosts, ...varCosts].forEach(c => {
+      if (c.id === "groceries")  budgetMap["Groceries"] = c.amount;
+      if (c.id === "transport")  budgetMap["Transport"] = c.amount;
+      if (c.id === "eatingout")  budgetMap["Eating Out & Cafes"] = c.amount;
+      if (c.id === "entertain")  budgetMap["Entertainment & Nights Out"] = c.amount;
+      if (c.id === "shopping")   budgetMap["Shopping"] = c.amount;
+    });
+    return Object.entries(budgetMap).map(([cat, budget]) => {
+      let monthsOver = 0, total = 0, totalActual = 0;
+      MONTHLY_SUMMARY.forEach(mo => {
+        const actual = (MONTHLY_CATEGORIES[mo.label] || {})[cat] || 0;
+        if (actual > 0) { total++; totalActual += actual; if (actual > budget) monthsOver++; }
+      });
+      const avgActual = total > 0 ? totalActual / total : 0;
+      const pct = total > 0 ? monthsOver / total : 0;
+      return { cat, budget, avgActual, monthsOver, total, pct };
+    }).filter(p => p.total > 0).sort((a, b) => b.pct - a.pct);
+  }, [MONTHLY_SUMMARY, MONTHLY_CATEGORIES, fixedCosts, varCosts]);
 
   const monthBreach  = forecastData.find(d => d.Balance < 0);
   const updateFixed  = (id, v) => setFixedCosts(p => p.map(c => c.id===id ? {...c, amount:Number(v)} : c));
@@ -997,6 +1041,33 @@ export default function SpendingTracker() {
               </div>
               <ChevronRight size={18} className="text-indigo-400 group-hover:translate-x-1 transition-transform"/>
             </button>
+
+            {/* ── LAST MONTH REVIEW CARD ── */}
+            {lastMonthReview && (
+              <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h2 className="text-base font-semibold flex items-center gap-2"><Calendar size={15} className="text-indigo-400"/> {lastMonthReview.label} Review</h2>
+                    <p className="text-gray-500 text-xs mt-0.5">{lastMonthReview.onBudget} of {lastMonthReview.total} tracked categories on budget</p>
+                  </div>
+                  <div className={`text-right px-4 py-2 rounded-xl ${lastMonthReview.net >= 0 ? "bg-emerald-900/30 border border-emerald-800" : "bg-red-900/30 border border-red-800"}`}>
+                    <div className="text-xs text-gray-500">Net</div>
+                    <div className={`text-xl font-bold ${lastMonthReview.net >= 0 ? "text-emerald-400" : "text-red-400"}`}>{lastMonthReview.net >= 0 ? "+" : ""}{fmt(lastMonthReview.net)}</div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {lastMonthReview.comparisons.map(({ cat, budget, actual, diff, over }) => (
+                    <div key={cat} className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: CAT_COLORS[cat] || "#6366f1"}}/>
+                      <span className="text-sm text-gray-300 flex-1">{cat}</span>
+                      <span className="text-xs text-gray-500">budget {fmt(budget)}</span>
+                      <span className={`text-sm font-semibold w-20 text-right ${over ? "text-red-400" : "text-emerald-400"}`}>{fmt(actual)}</span>
+                      <span className={`text-xs w-16 text-right ${over ? "text-red-500" : "text-emerald-500"}`}>{over ? "+" : "-"}{fmt(Math.abs(diff))}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr 1fr"}}>
               <div className="bg-gradient-to-br from-indigo-900 to-indigo-800 rounded-2xl p-4 shadow-xl">
@@ -1346,6 +1417,48 @@ export default function SpendingTracker() {
               );
             })()}
 
+            {/* ── BUDGET REALITY CHECK ── */}
+            {budgetPatterns.length > 0 && (
+              <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h2 className="text-base font-semibold flex items-center gap-2"><AlertTriangle size={15} className="text-amber-400"/> Budget Reality Check</h2>
+                    <p className="text-gray-500 text-xs mt-0.5">How consistently you hit each budget target across all {MONTHLY_SUMMARY.length} months</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {budgetPatterns.map(({ cat, budget, avgActual, monthsOver, total, pct }) => {
+                    const color = pct >= 0.67 ? "#ef4444" : pct >= 0.34 ? "#f59e0b" : "#22c55e";
+                    const label = pct >= 0.67 ? "Consistently over" : pct >= 0.34 ? "Sometimes over" : "Usually on track";
+                    const textColor = pct >= 0.67 ? "text-red-400" : pct >= 0.34 ? "text-amber-400" : "text-emerald-400";
+                    return (
+                      <div key={cat} className="bg-gray-800/60 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: CAT_COLORS[cat] || "#6366f1"}}/>
+                            <span className="text-sm font-medium text-gray-200">{cat}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${pct >= 0.67 ? "bg-red-900/40 text-red-400" : pct >= 0.34 ? "bg-amber-900/40 text-amber-400" : "bg-emerald-900/40 text-emerald-400"}`}>{label}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs text-gray-500">avg {fmt(avgActual)}</span>
+                            <span className="text-xs text-gray-600 mx-1.5">/</span>
+                            <span className="text-xs text-gray-400">budget {fmt(budget)}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div className="h-2 rounded-full transition-all" style={{width:`${pct * 100}%`, backgroundColor: color}}/>
+                          </div>
+                          <span className={`text-xs font-semibold ${textColor} w-24 text-right`}>{monthsOver}/{total} months over</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-600 mt-3">Red = over budget more than 2/3 of months. Fix these first — they're habitual, not one-offs.</p>
+              </div>
+            )}
+
             {/* ── TRANSACTIONS ── */}
             <div className="border-t border-gray-800 pt-5">
               <h2 className="text-base font-semibold mb-3 flex items-center gap-2"><CreditCard size={15} className="text-gray-400"/> Transactions</h2>
@@ -1399,6 +1512,22 @@ export default function SpendingTracker() {
           <motion.div key="plan"
             initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
             transition={{duration:0.18}} className="space-y-5">
+
+            {/* Plan sub-tab switcher */}
+            <div className="flex gap-1.5 bg-gray-900 p-1.5 rounded-xl w-fit">
+              {[
+                { id:"forecast", label:"Forecast & Budgets", icon:TrendingUp },
+                { id:"simulate", label:"Purchase Simulator",  icon:CreditCard },
+              ].map(v => (
+                <button key={v.id} onClick={() => setPlanView(v.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    planView === v.id ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400 hover:text-white hover:bg-gray-800"
+                  }`}>
+                  <v.icon size={14}/>{v.label}
+                </button>
+              ))}
+            </div>
+
             {importSuccess && (
               <div className="bg-emerald-900/30 border border-emerald-700 rounded-xl p-4 flex items-start justify-between gap-3">
                 <div className="flex gap-3">
@@ -1421,6 +1550,7 @@ export default function SpendingTracker() {
               </div>
             )}
 
+            {planView === "forecast" && (<>
             <div className="bg-gray-900 rounded-2xl p-5">
               <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><Film size={15} className="text-gray-400"/> Scenario Planning</h2>
               <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
@@ -1443,7 +1573,7 @@ export default function SpendingTracker() {
               </div>
             </div>
 
-            <div className="bg-gray-900 rounded-2xl p-5 grid gap-4" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
+            <div className="bg-gray-900 rounded-2xl p-5 grid gap-4" style={{gridTemplateColumns:"1fr 1fr"}}>
               <div>
                 <label className="text-xs text-gray-400 mb-1.5 block">Expected Monthly Income (£)</label>
                 <input type="number" value={monthlyIncome} onChange={e => setMonthlyIncome(Number(e.target.value))}
@@ -1455,17 +1585,6 @@ export default function SpendingTracker() {
                 <input type="range" min={3} max={11} value={horizonMonths}
                   onChange={e => setHorizonMonths(Number(e.target.value))} className="w-full accent-indigo-500 mt-2"/>
                 <p className="text-gray-400 text-xs mt-1">{horizonMonths} months (to {forecastData[horizonMonths - 1]?.month ?? "—"})</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 mb-1.5 block">Injury / Transport Mode</label>
-                <button onClick={() => setInjuryActive(p => !p)}
-                  className={`w-full py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-                    injuryActive ? "bg-amber-900/40 border-amber-600 text-amber-300" : "bg-emerald-900/40 border-emerald-600 text-emerald-300"
-                  }`}>
-                  <span className="flex items-center justify-center gap-2">
-                    {injuryActive ? <><Activity size={14}/> High transport mode (£463/mo)</> : <><Zap size={14}/> Standard transport (£172.50/mo)</>}
-                  </span>
-                </button>
               </div>
             </div>
 
@@ -1614,7 +1733,9 @@ export default function SpendingTracker() {
               </div>
             </div>
 
-            {/* ═══ CAN I AFFORD IT? — PURCHASE IMPACT SIMULATOR ═══ */}
+            </>)}
+
+            {planView === "simulate" && (
             <div className="bg-gray-900 rounded-2xl p-5 border border-indigo-800/40">
               <div className="mb-5">
                 <h2 className="text-base font-semibold flex items-center gap-2"><CreditCard size={15} className="text-gray-400"/> Can I Afford It? — Purchase Impact Simulator</h2>
@@ -1715,6 +1836,7 @@ export default function SpendingTracker() {
                 );
               })()}
             </div>
+            )}
           </motion.div>
         )}
 
@@ -1801,6 +1923,24 @@ export default function SpendingTracker() {
                       </div>
                     </div>
 
+                    {/* Goal-linked spending lever */}
+                    {(() => {
+                      const topLever = budgetPatterns.find(p => p.pct >= 0.34 && p.avgActual > p.budget);
+                      if (!topLever || monthsAway <= 0 || stillNeeded <= 0) return null;
+                      const extraPerMonth = topLever.avgActual - topLever.budget;
+                      const monthsSaved = extraPerMonth > 0 ? Math.round(stillNeeded / (monthlyNeeded + extraPerMonth) * 10) / 10 : 0;
+                      const monthsEarlier = Math.max(0, monthsAway - monthsSaved);
+                      if (monthsEarlier >= monthsAway) return null;
+                      return (
+                        <div className="mt-3 bg-indigo-900/20 border border-indigo-800/40 rounded-xl p-3 flex items-start gap-2">
+                          <Lightbulb size={14} className="text-indigo-400 flex-shrink-0 mt-0.5"/>
+                          <p className="text-xs text-indigo-300">
+                            Hit your <span className="font-semibold text-white">{topLever.cat}</span> budget ({fmt(topLever.budget)}/mo vs avg {fmt(topLever.avgActual)}/mo) and reach this goal <span className="font-semibold text-emerald-400">{Math.round(monthsAway - monthsSaved)} months sooner</span>.
+                          </p>
+                        </div>
+                      );
+                    })()}
+
                     <GoalInput goal={goal} setGoals={setGoals}/>
                   </div>
                 );
@@ -1881,13 +2021,22 @@ export default function SpendingTracker() {
                   <div className="text-xl font-bold text-orange-400">{fmt(totalSubAnnual)}/year</div>
                 </div>
               </div>
-              <div className="mb-4 bg-amber-900/30 border border-amber-700 rounded-lg p-3 flex gap-3">
-                <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5"/>
-                <div>
-                  <div className="font-semibold text-amber-300 text-sm">Two gym memberships in sample data</div>
-                  <div className="text-amber-200/80 text-xs mt-1">Fitness First + PureGym both appear. Together = £69–88/mo (£828/year). Consolidating to one saves £400+/year.</div>
-                </div>
-              </div>
+              {(() => {
+                const gymTxDescs = ALL_TRANSACTIONS
+                  .filter(tx => tx.cat === "Gym & Fitness" && tx.dir === "out")
+                  .map(tx => tx.desc.toLowerCase());
+                const uniqueGyms = new Set(gymTxDescs.map(d => d.split(" ").slice(0,2).join(" ")));
+                const hasMultipleGyms = uniqueGyms.size >= 2;
+                return hasMultipleGyms ? (
+                  <div className="mb-4 bg-amber-900/30 border border-amber-700 rounded-lg p-3 flex gap-3">
+                    <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5"/>
+                    <div>
+                      <div className="font-semibold text-amber-300 text-sm">Multiple gym memberships detected</div>
+                      <div className="text-amber-200/80 text-xs mt-1">More than one gym subscription appears in your data. Consolidating to one could save £400+/year.</div>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
               <div className="space-y-2">
                 {SUBSCRIPTIONS.map((sub, idx) => {
                   const Icon = sub.icon;
