@@ -222,8 +222,14 @@ const DEFAULT_VAR = [
   { id:"other",     label:"Other / Misc",            amount:80.00,  icon:Package },
 ];
 const FORECAST_MONTHS = ["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-// Corresponding month numbers (1-based) for date matching
 const FORECAST_MONTH_NUMS = [2,3,4,5,6,7,8,9,10,11,12];
+
+const THEMES = [
+  { id:"indigo",   label:"Indigo",   color:"#6366f1" },
+  { id:"midnight", label:"Midnight", color:"#22d3ee" },
+  { id:"emerald",  label:"Emerald",  color:"#22c55e" },
+  { id:"amber",    label:"Amber",    color:"#f59e0b" },
+];
 
 // ── SUBSCRIPTIONS DATA ────────────────────────────────────────────────────────
 const SUBSCRIPTIONS = [
@@ -390,6 +396,7 @@ function OtherDrillModal({ month, transactions, onClose, onReassign }) {
 // ── MAIN ─────────────────────────────────────────────────────────────────────
 export default function SpendingTracker() {
   const [tab, setTab]             = useState("overview");
+  const [themeId, setThemeId]     = useState(() => localStorage.getItem("theme") ?? "indigo");
   const [selMonth, setSelMonth]   = useState("Jan '26");
   const [search, setSearch]       = useState("");
   const [filterCat, setFilterCat] = useState("All");
@@ -746,7 +753,7 @@ export default function SpendingTracker() {
   }[v] || {});
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4">
+    <div className="min-h-screen bg-gray-950 text-white p-4" data-theme={themeId}>
       {/* STICKY BALANCE TICKER */}
       <div className="fixed top-4 right-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl px-4 py-3 shadow-xl border border-indigo-500/50 z-50">
         <div className="flex items-center gap-1.5 mb-0.5">
@@ -787,6 +794,14 @@ export default function SpendingTracker() {
                 <Download size={13}/> Export PNG
               </button>
             )}
+            <div className="flex items-center gap-1.5 bg-gray-900 border border-gray-800 rounded-xl px-2.5 py-2">
+              {THEMES.map(t => (
+                <button key={t.id} title={t.label}
+                  onClick={() => { setThemeId(t.id); localStorage.setItem("theme", t.id); }}
+                  className={`w-4 h-4 rounded-full transition-all ${themeId === t.id ? "ring-2 ring-white ring-offset-1 ring-offset-black scale-110" : "opacity-50 hover:opacity-90"}`}
+                  style={{backgroundColor: t.color}}/>
+              ))}
+            </div>
             {[
               { label:"Current Balance",  value:fmt(currentBalance),   sub: importedData ? "latest balance" : "31 Jan 2026", color:"text-emerald-400" },
               { label:`${MONTHLY_SUMMARY.length}-Month Total In`, value:fmt(historicIncome), sub:"all income sources", color:"text-blue-400" },
