@@ -17,163 +17,179 @@ import {
 } from "lucide-react";
 
 // ══════════════════════════════════════════════════════════════════════════════
-// SAMPLE DATA – 8 MONTHS: JUNE 2025 → JANUARY 2026
+// SAMPLE DATA – 8 MONTHS (fictional demo — Alex, junior software developer)
 // ══════════════════════════════════════════════════════════════════════════════
 const DEFAULT_MONTHLY_SUMMARY = [
-  { month:"Jun", label:"Jun '25",  income:3646.70, spending:2385.25, net: 1261.45, balanceEnd:2163.00 },
-  { month:"Jul", label:"Jul '25",  income:2052.92, spending:2439.86, net: -386.94, balanceEnd:1776.06 },
-  { month:"Aug", label:"Aug '25",  income: 962.65, spending:2270.29, net:-1307.64, balanceEnd: 468.42 },
-  { month:"Sep", label:"Sep '25",  income:4776.40, spending:2247.79, net: 2528.61, balanceEnd:2997.03 },
-  { month:"Oct", label:"Oct '25",  income:3771.81, spending:3270.22, net:  501.59, balanceEnd:3442.66 },
-  { month:"Nov", label:"Nov '25",  income: 811.00, spending:2524.21, net:-1713.21, balanceEnd:1729.45 },
-  { month:"Dec", label:"Dec '25",  income:2479.74, spending:2397.29, net:   82.45, balanceEnd:1811.90 },
-  { month:"Jan", label:"Jan '26",  income:2375.45, spending:1963.73, net:  411.72, balanceEnd:2223.62 },
+  { month:"Jun", label:"Jun '25",  income:3200.00, spending:2350.00, net:  850.00, balanceEnd:2100.00 },
+  { month:"Jul", label:"Jul '25",  income:2200.00, spending:2480.00, net: -280.00, balanceEnd:1820.00 },
+  { month:"Aug", label:"Aug '25",  income:1000.00, spending:2250.00, net:-1250.00, balanceEnd: 570.00 },
+  { month:"Sep", label:"Sep '25",  income:4500.00, spending:2200.00, net: 2300.00, balanceEnd:2870.00 },
+  { month:"Oct", label:"Oct '25",  income:3600.00, spending:3200.00, net:  400.00, balanceEnd:3270.00 },
+  { month:"Nov", label:"Nov '25",  income: 800.00, spending:2500.00, net:-1700.00, balanceEnd:1570.00 },
+  { month:"Dec", label:"Dec '25",  income:2400.00, spending:2400.00, net:    0.00, balanceEnd:1570.00 },
+  { month:"Jan", label:"Jan '26",  income:2400.00, spending:2000.00, net:  400.00, balanceEnd:1970.00 },
 ];
 
 const DEFAULT_INCOME_BREAKDOWN = {
-  "Jun '25": { "UCL Stipend":2500.00, "Family Support":340.55, "Student Loan":645.60, "Other":160.55 },
-  "Jul '25": { "UCL Stipend":1250.00, "Family Support":200.00, "Student Loan":250.00, "Other":352.92 },
-  "Aug '25": { "UCL Stipend":300.00,  "Family Support":250.00, "Other":412.65 },
-  "Sep '25": { "UCL Stipend":3776.40, "Family Support":300.00, "Student Loan":700.00 },
-  "Oct '25": { "UCL Stipend":1575.45, "NHS Bursary":1537.00, "Family Support":525.00, "Other":134.36 },
-  "Nov '25": { "Family Support":493.81, "UCL Stipend":300.00, "Other":17.19 },
-  "Dec '25": { "NHS Bursary":1537.00, "Family Support":325.00, "UCL Stipend":300.00, "Other":317.74 },
-  "Jan '26": { "UCL Stipend":1575.45, "Family Support":300.00, "Other":500.00 },
+  "Jun '25": { "Salary":2200.00, "Freelance":600.00, "Side Income":400.00 },
+  "Jul '25": { "Salary":2200.00 },
+  "Aug '25": { "Salary":600.00,  "Side Income":400.00 },
+  "Sep '25": { "Salary":2200.00, "Freelance":1500.00, "Bonus":800.00 },
+  "Oct '25": { "Salary":2200.00, "Freelance":1000.00, "Side Income":400.00 },
+  "Nov '25": { "Salary":800.00 },
+  "Dec '25": { "Salary":2200.00, "Side Income":200.00 },
+  "Jan '26": { "Salary":2200.00, "Freelance":200.00 },
 };
 
 const DEFAULT_MONTHLY_CATEGORIES = {
-  "Jun '25": { Rent:975.00, Shopping:326.65, Transport:248.26, Groceries:197.56, "Eating Out & Cafes":167.77, Other:164.75, Healthcare:91.30, "Personal Transfers":77.35, "Gym & Fitness":69.00, Subscriptions:35.97, "Phone Bill":31.64 },
-  "Jul '25": { Rent:987.00, Transport:331.85, Groceries:269.37, "Eating Out & Cafes":239.87, "Entertainment & Nights Out":207.60, Other:116.41, "Personal Transfers":95.00, "Gym & Fitness":86.79, Subscriptions:35.97, "Phone Bill":34.96, Shopping:27.68, Healthcare:7.36 },
-  "Aug '25": { Rent:975.00, Groceries:382.95, Transport:206.90, Shopping:186.15, "Eating Out & Cafes":170.77, "Personal Transfers":75.00, "Gym & Fitness":69.00, Other:58.47, Healthcare:58.45, Subscriptions:55.96, "Phone Bill":31.64 },
-  "Sep '25": { Rent:989.50, Transport:462.83, "Eating Out & Cafes":174.96, Subscriptions:110.46, Healthcare:95.26, "Entertainment & Nights Out":88.30, Groceries:77.58, "Personal Transfers":75.00, Other:72.43, "Gym & Fitness":69.00, "Phone Bill":32.47 },
-  "Oct '25": { Rent:975.00, Other:1134.63, Groceries:355.93, Transport:164.61, "Entertainment & Nights Out":122.20, "Eating Out & Cafes":114.04, Subscriptions:105.95, Shopping:82.99, "Gym & Fitness":76.50, Healthcare:34.43, "Phone Bill":37.64, "Personal Transfers":25.00 },
-  "Nov '25": { Rent:975.00, Other:561.74, Groceries:217.98, Transport:184.71, "Eating Out & Cafes":115.79, Subscriptions:107.95, "Entertainment & Nights Out":78.50, "Gym & Fitness":70.00, Healthcare:69.82, Shopping:62.48, "Phone Bill":40.96, "Personal Transfers":0 },
-  "Dec '25": { Rent:975.00, Other:444.17, "Eating Out & Cafes":232.47, Groceries:209.81, Transport:205.90, "Gym & Fitness":88.99, Subscriptions:82.96, "Entertainment & Nights Out":40.80, "Phone Bill":37.64, Healthcare:29.57 },
-  "Jan '26": { Rent:975.00, Transport:276.71, Other:189.50, Groceries:139.20, Subscriptions:88.37, "Entertainment & Nights Out":80.00, "Gym & Fitness":69.00, "Eating Out & Cafes":61.02, "Phone Bill":37.64, "Personal Transfers":25.00, Healthcare:8.54 },
+  "Jun '25": { Rent:1000.00, Shopping:300.00, Transport:240.00, Groceries:200.00, "Eating Out & Cafes":160.00, Other:160.00, Healthcare:90.00, "Personal Transfers":75.00, "Gym & Fitness":70.00, Subscriptions:36.00, "Phone Bill":35.00 },
+  "Jul '25": { Rent:1000.00, Transport:330.00, Groceries:270.00, "Eating Out & Cafes":240.00, "Entertainment & Nights Out":210.00, Other:115.00, "Personal Transfers":95.00, "Gym & Fitness":70.00, Subscriptions:36.00, "Phone Bill":35.00, Shopping:44.00, Healthcare:31.00 },
+  "Aug '25": { Rent:1000.00, Groceries:380.00, Transport:200.00, Shopping:185.00, "Eating Out & Cafes":170.00, "Personal Transfers":75.00, "Gym & Fitness":70.00, Other:60.00, Healthcare:55.00, Subscriptions:55.00, "Phone Bill":35.00 },
+  "Sep '25": { Rent:1000.00, Transport:460.00, "Eating Out & Cafes":175.00, Subscriptions:110.00, Healthcare:95.00, "Entertainment & Nights Out":90.00, Groceries:80.00, "Personal Transfers":75.00, Other:70.00, "Gym & Fitness":70.00, "Phone Bill":35.00 },
+  "Oct '25": { Rent:1000.00, Other:1100.00, Groceries:355.00, Transport:165.00, "Entertainment & Nights Out":120.00, "Eating Out & Cafes":115.00, Subscriptions:106.00, Shopping:83.00, "Gym & Fitness":70.00, Healthcare:35.00, "Phone Bill":35.00, "Personal Transfers":25.00 },
+  "Nov '25": { Rent:1000.00, Other:560.00, Groceries:220.00, Transport:185.00, "Eating Out & Cafes":115.00, Subscriptions:108.00, "Entertainment & Nights Out":80.00, "Gym & Fitness":70.00, Healthcare:70.00, Shopping:62.00, "Phone Bill":35.00 },
+  "Dec '25": { Rent:1000.00, Other:445.00, "Eating Out & Cafes":230.00, Groceries:210.00, Transport:205.00, "Gym & Fitness":70.00, Subscriptions:83.00, "Entertainment & Nights Out":40.00, "Phone Bill":35.00, Healthcare:30.00, Shopping:52.00 },
+  "Jan '26": { Rent:1000.00, Transport:275.00, Other:190.00, Groceries:140.00, Subscriptions:88.00, "Entertainment & Nights Out":80.00, "Gym & Fitness":70.00, "Eating Out & Cafes":62.00, "Phone Bill":35.00, "Personal Transfers":25.00, Healthcare:35.00 },
 };
 
 const DEFAULT_ALL_TRANSACTIONS = [
-  // JUNE
-  { date:"2025-06-02", desc:"Thomas Knight (Rent)",        cat:"Rent",                amount:975.00, dir:"out", month:"Jun '25" },
-  { date:"2025-06-05", desc:"Barclays – UCL Stipend",      cat:"Stipend / Grants",    amount:2500.00,dir:"in",  month:"Jun '25" },
-  { date:"2025-06-25", desc:"Student Loan – June",         cat:"Student Loan",        amount:645.60, dir:"in",  month:"Jun '25" },
-  { date:"2025-06-09", desc:"Apple.com/bill",              cat:"Subscriptions",       amount:8.99,   dir:"out", month:"Jun '25" },
-  { date:"2025-06-02", desc:"Costa Coffee",                cat:"Eating Out & Cafes",  amount:6.49,   dir:"out", month:"Jun '25" },
-  { date:"2025-06-02", desc:"Royal Free London",           cat:"Healthcare",          amount:21.22,  dir:"out", month:"Jun '25" },
-  { date:"2025-06-09", desc:"Moss Bros Oxford St",         cat:"Shopping",            amount:49.95,  dir:"out", month:"Jun '25" },
-  { date:"2025-06-09", desc:"Friend Transfer",              cat:"Personal Transfers",  amount:20.00,  dir:"out", month:"Jun '25" },
-  { date:"2025-06-09", desc:"Friend Transfer",             cat:"Personal Transfers",  amount:45.00,  dir:"out", month:"Jun '25" },
-  { date:"2025-06-03", desc:"Family Transfer (Jun)",       cat:"Family Support",      amount:340.55, dir:"in",  month:"Jun '25" },
-  { date:"2025-06-15", desc:"TfL / LIME (transport)",      cat:"Transport",           amount:248.26, dir:"out", month:"Jun '25" },
-  { date:"2025-06-21", desc:"Groceries (Jun total)",       cat:"Groceries",           amount:197.56, dir:"out", month:"Jun '25" },
-  { date:"2025-06-28", desc:"Eating Out (Jun total)",      cat:"Eating Out & Cafes",  amount:167.77, dir:"out", month:"Jun '25" },
-  // JULY
-  { date:"2025-07-02", desc:"Thomas Knight (Rent)",        cat:"Rent",                amount:987.00, dir:"out", month:"Jul '25" },
-  { date:"2025-07-08", desc:"Barclays – UCL Stipend",      cat:"Stipend / Grants",    amount:1250.00,dir:"in",  month:"Jul '25" },
-  { date:"2025-07-11", desc:"Student Loan – July",         cat:"Student Loan",        amount:250.00, dir:"in",  month:"Jul '25" },
-  { date:"2025-07-22", desc:"The Roxy / Simmons Bar",      cat:"Entertainment & Nights Out", amount:83.90, dir:"out", month:"Jul '25" },
-  { date:"2025-07-22", desc:"King's Arms Wandsworth",      cat:"Entertainment & Nights Out", amount:26.90, dir:"out", month:"Jul '25" },
-  { date:"2025-07-22", desc:"Northcote Records",           cat:"Entertainment & Nights Out", amount:22.50, dir:"out", month:"Jul '25" },
-  { date:"2025-07-27", desc:"Flat Iron Kensington",        cat:"Entertainment & Nights Out", amount:33.39, dir:"out", month:"Jul '25" },
-  { date:"2025-07-25", desc:"Ted Loco Productions",        cat:"Entertainment & Nights Out", amount:74.30, dir:"out", month:"Jul '25" },
-  { date:"2025-07-20", desc:"Bancone Golden Square",       cat:"Eating Out & Cafes",  amount:57.94,  dir:"out", month:"Jul '25" },
-  { date:"2025-07-01", desc:"Family Support (Jul)",        cat:"Family Support",      amount:200.00, dir:"in",  month:"Jul '25" },
-  { date:"2025-07-15", desc:"Transport (Jul total)",       cat:"Transport",           amount:331.85, dir:"out", month:"Jul '25" },
-  { date:"2025-07-15", desc:"Groceries (Jul total)",       cat:"Groceries",           amount:269.37, dir:"out", month:"Jul '25" },
-  // AUGUST
-  { date:"2025-08-04", desc:"Thomas Knight (Rent)",        cat:"Rent",                amount:975.00, dir:"out", month:"Aug '25" },
-  { date:"2025-08-04", desc:"Frontier Operations (in)",    cat:"Stipend / Grants",    amount:300.00, dir:"in",  month:"Aug '25" },
-  { date:"2025-08-01", desc:"Family Support (Aug)",        cat:"Family Support",      amount:250.00, dir:"in",  month:"Aug '25" },
-  { date:"2025-08-07", desc:"UNIQLO",                      cat:"Shopping",            amount:119.70, dir:"out", month:"Aug '25" },
-  { date:"2025-08-08", desc:"Boots Opticians",             cat:"Healthcare",          amount:58.45,  dir:"out", month:"Aug '25" },
-  { date:"2025-08-01", desc:"Apple.com/bill",              cat:"Subscriptions",       amount:19.99,  dir:"out", month:"Aug '25" },
-  { date:"2025-08-01", desc:"Moss Bros Oxford St",         cat:"Shopping",            amount:34.95,  dir:"out", month:"Aug '25" },
-  { date:"2025-08-15", desc:"Transport (Aug total)",       cat:"Transport",           amount:206.90, dir:"out", month:"Aug '25" },
-  { date:"2025-08-15", desc:"Groceries (Aug total)",       cat:"Groceries",           amount:382.95, dir:"out", month:"Aug '25" },
-  // SEPTEMBER
-  { date:"2025-09-28", desc:"Thomas Knight (Rent)",        cat:"Rent",                amount:989.50, dir:"out", month:"Sep '25" },
-  { date:"2025-09-11", desc:"Barclays UCL Stipend",        cat:"Stipend / Grants",    amount:3776.40,dir:"in",  month:"Sep '25" },
-  { date:"2025-09-13", desc:"Student Loan",                cat:"Student Loan",        amount:700.00, dir:"in",  month:"Sep '25" },
-  { date:"2025-09-01", desc:"Family Support (Sep)",        cat:"Family Support",      amount:300.00, dir:"in",  month:"Sep '25" },
-  { date:"2025-09-12", desc:"Spotify Family Plan",         cat:"Subscriptions",       amount:21.99,  dir:"out", month:"Sep '25" },
-  { date:"2025-09-12", desc:"LinkedIn Premium",            cat:"Subscriptions",       amount:49.99,  dir:"out", month:"Sep '25" },
-  { date:"2025-09-19", desc:"The Standard Hotel",          cat:"Entertainment & Nights Out", amount:33.36, dir:"out", month:"Sep '25" },
-  { date:"2025-09-18", desc:"Simmons Bars / Odeon",        cat:"Entertainment & Nights Out", amount:38.90, dir:"out", month:"Sep '25" },
-  { date:"2025-09-21", desc:"Healthcare (Sep total)",      cat:"Healthcare",          amount:95.26,  dir:"out", month:"Sep '25" },
-  { date:"2025-09-15", desc:"Transport (Sep total)",       cat:"Transport",           amount:462.83, dir:"out", month:"Sep '25" },
-  // OCTOBER
-  { date:"2025-10-01", desc:"Thomas Knight (Rent)",        cat:"Rent",                amount:975.00, dir:"out", month:"Oct '25" },
-  { date:"2025-10-03", desc:"NHSBSA – NHS Bursary",        cat:"NHS Bursary",         amount:1537.00,dir:"in",  month:"Oct '25" },
-  { date:"2025-10-03", desc:"UCL Stipend / SLC",           cat:"Stipend / Grants",    amount:1575.45,dir:"in",  month:"Oct '25" },
-  { date:"2025-10-01", desc:"Family Support (Oct)",        cat:"Family Support",      amount:525.00, dir:"in",  month:"Oct '25" },
-  { date:"2025-10-02", desc:"Other Income (Oct)",          cat:"Other Income",        amount:134.36, dir:"in",  month:"Oct '25" },
-  { date:"2025-10-01", desc:"Apple.com/bill",              cat:"Subscriptions",       amount:19.99,  dir:"out", month:"Oct '25" },
-  { date:"2025-10-09", desc:"Apple.com/bill (2nd)",        cat:"Subscriptions",       amount:8.99,   dir:"out", month:"Oct '25" },
-  { date:"2025-10-06", desc:"Rowans Ten Pin Bowling",      cat:"Entertainment & Nights Out", amount:33.40, dir:"out", month:"Oct '25" },
-  { date:"2025-10-06", desc:"Zipcar Application",          cat:"Transport",           amount:15.00,  dir:"out", month:"Oct '25" },
-  { date:"2025-10-07", desc:"Calvin Klein",                cat:"Shopping",            amount:35.00,  dir:"out", month:"Oct '25" },
-  { date:"2025-10-08", desc:"Royal Free London",           cat:"Healthcare",          amount:34.43,  dir:"out", month:"Oct '25" },
-  { date:"2025-10-06", desc:"Caffe Nero",                  cat:"Eating Out & Cafes",  amount:6.40,   dir:"out", month:"Oct '25" },
-  { date:"2025-10-06", desc:"Blackstock Pub",              cat:"Entertainment & Nights Out", amount:14.40, dir:"out", month:"Oct '25" },
-  { date:"2025-10-15", desc:"O2 Phone Bill",               cat:"Phone Bill",          amount:37.64,  dir:"out", month:"Oct '25" },
-  { date:"2025-10-15", desc:"Fitness First / PureGym",     cat:"Gym & Fitness",       amount:76.50,  dir:"out", month:"Oct '25" },
-  { date:"2025-10-15", desc:"Transport (Oct total)",       cat:"Transport",           amount:164.61, dir:"out", month:"Oct '25" },
-  { date:"2025-10-15", desc:"Groceries (Oct total)",       cat:"Groceries",           amount:355.93, dir:"out", month:"Oct '25" },
-  { date:"2025-10-15", desc:"Eating Out (Oct total)",      cat:"Eating Out & Cafes",  amount:107.64, dir:"out", month:"Oct '25" },
-  { date:"2025-10-15", desc:"Other spending (Oct)",        cat:"Other",               amount:1134.63,dir:"out", month:"Oct '25" },
-  // NOVEMBER
-  { date:"2025-11-03", desc:"Thomas Knight (Rent)",        cat:"Rent",                amount:975.00, dir:"out", month:"Nov '25" },
-  { date:"2025-11-03", desc:"Family Support (Nov)",        cat:"Family Support",      amount:493.81, dir:"in",  month:"Nov '25" },
-  { date:"2025-11-06", desc:"UCL Stipend (Nov)",           cat:"Stipend / Grants",    amount:300.00, dir:"in",  month:"Nov '25" },
-  { date:"2025-11-03", desc:"Family Transfer (Nov)",       cat:"Family Support",      amount:150.00, dir:"in",  month:"Nov '25" },
-  { date:"2025-11-03", desc:"Simmons Bars (3 charges)",    cat:"Entertainment & Nights Out", amount:78.50, dir:"out", month:"Nov '25" },
-  { date:"2025-11-03", desc:"Uber Trip",                   cat:"Transport",           amount:23.99,  dir:"out", month:"Nov '25" },
-  { date:"2025-11-03", desc:"HD Cutz (haircut)",           cat:"Entertainment & Nights Out", amount:36.00, dir:"out", month:"Nov '25" },
-  { date:"2025-11-03", desc:"Trainline",                   cat:"Transport",           amount:25.20,  dir:"out", month:"Nov '25" },
-  { date:"2025-11-03", desc:"Apple.com/bill",              cat:"Subscriptions",       amount:19.99,  dir:"out", month:"Nov '25" },
-  { date:"2025-11-03", desc:"The Whittington Hospital",    cat:"Healthcare",          amount:69.82,  dir:"out", month:"Nov '25" },
-  { date:"2025-11-04", desc:"Boohoo.com (clothing)",       cat:"Shopping",            amount:62.48,  dir:"out", month:"Nov '25" },
-  { date:"2025-11-15", desc:"O2 Phone Bill",               cat:"Phone Bill",          amount:40.96,  dir:"out", month:"Nov '25" },
-  { date:"2025-11-15", desc:"Fitness First / PureGym",     cat:"Gym & Fitness",       amount:70.00,  dir:"out", month:"Nov '25" },
-  { date:"2025-11-15", desc:"Transport (Nov total)",       cat:"Transport",           amount:184.71, dir:"out", month:"Nov '25" },
-  { date:"2025-11-15", desc:"Groceries (Nov total)",       cat:"Groceries",           amount:217.98, dir:"out", month:"Nov '25" },
-  { date:"2025-11-15", desc:"Eating Out (Nov total)",      cat:"Eating Out & Cafes",  amount:115.79, dir:"out", month:"Nov '25" },
-  { date:"2025-11-15", desc:"Other spending (Nov)",        cat:"Other",               amount:561.74, dir:"out", month:"Nov '25" },
-  // DECEMBER
-  { date:"2025-12-02", desc:"Thomas Knight (Rent)",        cat:"Rent",                amount:975.00, dir:"out", month:"Dec '25" },
-  { date:"2025-12-01", desc:"NHS Bursary",                 cat:"NHS Bursary",         amount:1537.00,dir:"in",  month:"Dec '25" },
-  { date:"2025-12-01", desc:"Family Support (Dec)",        cat:"Family Support",      amount:325.00, dir:"in",  month:"Dec '25" },
-  { date:"2025-12-01", desc:"UCL Stipend (Dec)",           cat:"Stipend / Grants",    amount:300.00, dir:"in",  month:"Dec '25" },
-  { date:"2025-12-01", desc:"Nottingham trip (bars/food)", cat:"Entertainment & Nights Out", amount:40.80, dir:"out", month:"Dec '25" },
-  { date:"2025-12-01", desc:"Bierkeller Nottingham",       cat:"Entertainment & Nights Out", amount:23.00, dir:"out", month:"Dec '25" },
-  { date:"2025-12-01", desc:"Apple.com/bill",              cat:"Subscriptions",       amount:19.99,  dir:"out", month:"Dec '25" },
-  { date:"2025-12-02", desc:"Cynthia's",                   cat:"Eating Out & Cafes",  amount:11.99,  dir:"out", month:"Dec '25" },
-  { date:"2025-12-15", desc:"O2 Phone Bill",               cat:"Phone Bill",          amount:37.64,  dir:"out", month:"Dec '25" },
-  { date:"2025-12-15", desc:"Fitness First / PureGym",     cat:"Gym & Fitness",       amount:88.99,  dir:"out", month:"Dec '25" },
-  { date:"2025-12-15", desc:"Transport (Dec total)",       cat:"Transport",           amount:205.90, dir:"out", month:"Dec '25" },
-  { date:"2025-12-15", desc:"Groceries (Dec total)",       cat:"Groceries",           amount:209.81, dir:"out", month:"Dec '25" },
-  { date:"2025-12-15", desc:"Eating Out (Dec total)",      cat:"Eating Out & Cafes",  amount:220.48, dir:"out", month:"Dec '25" },
-  { date:"2025-12-15", desc:"Other spending (Dec)",        cat:"Other",               amount:444.17, dir:"out", month:"Dec '25" },
+  // JUNE 2025
+  { date:"2025-06-01", desc:"Monthly Rent",               cat:"Rent",                amount:1000.00,dir:"out", month:"Jun '25" },
+  { date:"2025-06-03", desc:"Employer Salary",            cat:"Salary",              amount:2200.00,dir:"in",  month:"Jun '25" },
+  { date:"2025-06-05", desc:"Freelance Project",          cat:"Freelance",           amount:600.00, dir:"in",  month:"Jun '25" },
+  { date:"2025-06-05", desc:"Side Income",                cat:"Side Income",         amount:400.00, dir:"in",  month:"Jun '25" },
+  { date:"2025-06-05", desc:"Streaming Service",          cat:"Subscriptions",       amount:13.00,  dir:"out", month:"Jun '25" },
+  { date:"2025-06-06", desc:"Coffee Shop",                cat:"Eating Out & Cafes",  amount:6.50,   dir:"out", month:"Jun '25" },
+  { date:"2025-06-07", desc:"GP Appointment",             cat:"Healthcare",          amount:20.00,  dir:"out", month:"Jun '25" },
+  { date:"2025-06-09", desc:"Clothing Store",             cat:"Shopping",            amount:80.00,  dir:"out", month:"Jun '25" },
+  { date:"2025-06-09", desc:"Friend Transfer",            cat:"Personal Transfers",  amount:30.00,  dir:"out", month:"Jun '25" },
+  { date:"2025-06-09", desc:"Friend Transfer",            cat:"Personal Transfers",  amount:45.00,  dir:"out", month:"Jun '25" },
+  { date:"2025-06-15", desc:"Monthly Travelcard",         cat:"Transport",           amount:175.00, dir:"out", month:"Jun '25" },
+  { date:"2025-06-15", desc:"Gym Membership",             cat:"Gym & Fitness",       amount:70.00,  dir:"out", month:"Jun '25" },
+  { date:"2025-06-15", desc:"Phone Contract",             cat:"Phone Bill",          amount:35.00,  dir:"out", month:"Jun '25" },
+  { date:"2025-06-20", desc:"Supermarket",                cat:"Groceries",           amount:200.00, dir:"out", month:"Jun '25" },
+  { date:"2025-06-25", desc:"Restaurant",                 cat:"Eating Out & Cafes",  amount:55.00,  dir:"out", month:"Jun '25" },
+  { date:"2025-06-28", desc:"Uber",                       cat:"Transport",           amount:65.00,  dir:"out", month:"Jun '25" },
+  // JULY 2025
+  { date:"2025-07-01", desc:"Monthly Rent",               cat:"Rent",                amount:1000.00,dir:"out", month:"Jul '25" },
+  { date:"2025-07-03", desc:"Employer Salary",            cat:"Salary",              amount:2200.00,dir:"in",  month:"Jul '25" },
+  { date:"2025-07-05", desc:"Streaming Service",          cat:"Subscriptions",       amount:13.00,  dir:"out", month:"Jul '25" },
+  { date:"2025-07-10", desc:"Night Out (bar tab)",        cat:"Entertainment & Nights Out", amount:85.00, dir:"out", month:"Jul '25" },
+  { date:"2025-07-12", desc:"Live Music",                 cat:"Entertainment & Nights Out", amount:55.00, dir:"out", month:"Jul '25" },
+  { date:"2025-07-15", desc:"Restaurant",                 cat:"Eating Out & Cafes",  amount:58.00,  dir:"out", month:"Jul '25" },
+  { date:"2025-07-15", desc:"Monthly Travelcard",         cat:"Transport",           amount:175.00, dir:"out", month:"Jul '25" },
+  { date:"2025-07-15", desc:"Gym Membership",             cat:"Gym & Fitness",       amount:70.00,  dir:"out", month:"Jul '25" },
+  { date:"2025-07-15", desc:"Phone Contract",             cat:"Phone Bill",          amount:35.00,  dir:"out", month:"Jul '25" },
+  { date:"2025-07-18", desc:"Friend Transfer",            cat:"Personal Transfers",  amount:95.00,  dir:"out", month:"Jul '25" },
+  { date:"2025-07-20", desc:"Supermarket",                cat:"Groceries",           amount:270.00, dir:"out", month:"Jul '25" },
+  { date:"2025-07-22", desc:"Cinema & Dinner",            cat:"Entertainment & Nights Out", amount:45.00, dir:"out", month:"Jul '25" },
+  { date:"2025-07-25", desc:"Clothing Store",             cat:"Shopping",            amount:44.00,  dir:"out", month:"Jul '25" },
+  { date:"2025-07-28", desc:"GP Appointment",             cat:"Healthcare",          amount:31.00,  dir:"out", month:"Jul '25" },
+  { date:"2025-07-28", desc:"Uber",                       cat:"Transport",           amount:155.00, dir:"out", month:"Jul '25" },
+  // AUGUST 2025
+  { date:"2025-08-01", desc:"Monthly Rent",               cat:"Rent",                amount:1000.00,dir:"out", month:"Aug '25" },
+  { date:"2025-08-04", desc:"Employer Salary (part)",     cat:"Salary",              amount:600.00, dir:"in",  month:"Aug '25" },
+  { date:"2025-08-05", desc:"Side Income",                cat:"Side Income",         amount:400.00, dir:"in",  month:"Aug '25" },
+  { date:"2025-08-07", desc:"Clothing Store",             cat:"Shopping",            amount:120.00, dir:"out", month:"Aug '25" },
+  { date:"2025-08-08", desc:"Optician",                   cat:"Healthcare",          amount:55.00,  dir:"out", month:"Aug '25" },
+  { date:"2025-08-10", desc:"Streaming Services",         cat:"Subscriptions",       amount:55.00,  dir:"out", month:"Aug '25" },
+  { date:"2025-08-10", desc:"Online Clothing",            cat:"Shopping",            amount:65.00,  dir:"out", month:"Aug '25" },
+  { date:"2025-08-15", desc:"Monthly Travelcard",         cat:"Transport",           amount:175.00, dir:"out", month:"Aug '25" },
+  { date:"2025-08-15", desc:"Gym Membership",             cat:"Gym & Fitness",       amount:70.00,  dir:"out", month:"Aug '25" },
+  { date:"2025-08-15", desc:"Phone Contract",             cat:"Phone Bill",          amount:35.00,  dir:"out", month:"Aug '25" },
+  { date:"2025-08-15", desc:"Friend Transfer",            cat:"Personal Transfers",  amount:75.00,  dir:"out", month:"Aug '25" },
+  { date:"2025-08-20", desc:"Supermarket",                cat:"Groceries",           amount:380.00, dir:"out", month:"Aug '25" },
+  { date:"2025-08-25", desc:"Restaurants & Cafes",        cat:"Eating Out & Cafes",  amount:170.00, dir:"out", month:"Aug '25" },
+  { date:"2025-08-28", desc:"Uber",                       cat:"Transport",           amount:25.00,  dir:"out", month:"Aug '25" },
+  // SEPTEMBER 2025
+  { date:"2025-09-01", desc:"Monthly Rent",               cat:"Rent",                amount:1000.00,dir:"out", month:"Sep '25" },
+  { date:"2025-09-03", desc:"Employer Salary",            cat:"Salary",              amount:2200.00,dir:"in",  month:"Sep '25" },
+  { date:"2025-09-05", desc:"Freelance Project",          cat:"Freelance",           amount:1500.00,dir:"in",  month:"Sep '25" },
+  { date:"2025-09-08", desc:"Annual Bonus",               cat:"Bonus",               amount:800.00, dir:"in",  month:"Sep '25" },
+  { date:"2025-09-10", desc:"Streaming Service",          cat:"Subscriptions",       amount:22.00,  dir:"out", month:"Sep '25" },
+  { date:"2025-09-10", desc:"Professional Subscription",  cat:"Subscriptions",       amount:50.00,  dir:"out", month:"Sep '25" },
+  { date:"2025-09-12", desc:"Hotel (city break)",         cat:"Entertainment & Nights Out", amount:55.00, dir:"out", month:"Sep '25" },
+  { date:"2025-09-13", desc:"Bars & Restaurants",         cat:"Entertainment & Nights Out", amount:35.00, dir:"out", month:"Sep '25" },
+  { date:"2025-09-15", desc:"Monthly Travelcard",         cat:"Transport",           amount:175.00, dir:"out", month:"Sep '25" },
+  { date:"2025-09-15", desc:"Gym Membership",             cat:"Gym & Fitness",       amount:70.00,  dir:"out", month:"Sep '25" },
+  { date:"2025-09-15", desc:"Phone Contract",             cat:"Phone Bill",          amount:35.00,  dir:"out", month:"Sep '25" },
+  { date:"2025-09-15", desc:"Friend Transfer",            cat:"Personal Transfers",  amount:75.00,  dir:"out", month:"Sep '25" },
+  { date:"2025-09-18", desc:"Pharmacy",                   cat:"Healthcare",          amount:95.00,  dir:"out", month:"Sep '25" },
+  { date:"2025-09-20", desc:"Supermarket",                cat:"Groceries",           amount:80.00,  dir:"out", month:"Sep '25" },
+  { date:"2025-09-25", desc:"Restaurant",                 cat:"Eating Out & Cafes",  amount:175.00, dir:"out", month:"Sep '25" },
+  { date:"2025-09-28", desc:"Train Tickets",              cat:"Transport",           amount:285.00, dir:"out", month:"Sep '25" },
+  // OCTOBER 2025
+  { date:"2025-10-01", desc:"Monthly Rent",               cat:"Rent",                amount:1000.00,dir:"out", month:"Oct '25" },
+  { date:"2025-10-03", desc:"Employer Salary",            cat:"Salary",              amount:2200.00,dir:"in",  month:"Oct '25" },
+  { date:"2025-10-05", desc:"Freelance Project",          cat:"Freelance",           amount:1000.00,dir:"in",  month:"Oct '25" },
+  { date:"2025-10-06", desc:"Side Income",                cat:"Side Income",         amount:400.00, dir:"in",  month:"Oct '25" },
+  { date:"2025-10-05", desc:"Streaming Service",          cat:"Subscriptions",       amount:20.00,  dir:"out", month:"Oct '25" },
+  { date:"2025-10-06", desc:"Streaming Service (2nd)",    cat:"Subscriptions",       amount:9.00,   dir:"out", month:"Oct '25" },
+  { date:"2025-10-07", desc:"Night Out (bowling)",        cat:"Entertainment & Nights Out", amount:34.00, dir:"out", month:"Oct '25" },
+  { date:"2025-10-08", desc:"Clothing Store",             cat:"Shopping",            amount:83.00,  dir:"out", month:"Oct '25" },
+  { date:"2025-10-09", desc:"GP Appointment",             cat:"Healthcare",          amount:35.00,  dir:"out", month:"Oct '25" },
+  { date:"2025-10-10", desc:"Coffee Shop",                cat:"Eating Out & Cafes",  amount:6.00,   dir:"out", month:"Oct '25" },
+  { date:"2025-10-11", desc:"Night Out (pub)",            cat:"Entertainment & Nights Out", amount:14.00, dir:"out", month:"Oct '25" },
+  { date:"2025-10-12", desc:"Night Out (bar)",            cat:"Entertainment & Nights Out", amount:72.00, dir:"out", month:"Oct '25" },
+  { date:"2025-10-15", desc:"Phone Contract",             cat:"Phone Bill",          amount:35.00,  dir:"out", month:"Oct '25" },
+  { date:"2025-10-15", desc:"Gym Membership",             cat:"Gym & Fitness",       amount:70.00,  dir:"out", month:"Oct '25" },
+  { date:"2025-10-15", desc:"Monthly Travelcard",         cat:"Transport",           amount:175.00, dir:"out", month:"Oct '25" },
+  { date:"2025-10-15", desc:"Supermarket",                cat:"Groceries",           amount:355.00, dir:"out", month:"Oct '25" },
+  { date:"2025-10-15", desc:"Restaurant",                 cat:"Eating Out & Cafes",  amount:109.00, dir:"out", month:"Oct '25" },
+  { date:"2025-10-15", desc:"Friend Transfer",            cat:"Personal Transfers",  amount:25.00,  dir:"out", month:"Oct '25" },
+  { date:"2025-10-20", desc:"Other spending",             cat:"Other",               amount:1100.00,dir:"out", month:"Oct '25" },
+  // NOVEMBER 2025
+  { date:"2025-11-01", desc:"Monthly Rent",               cat:"Rent",                amount:1000.00,dir:"out", month:"Nov '25" },
+  { date:"2025-11-03", desc:"Employer Salary (part)",     cat:"Salary",              amount:800.00, dir:"in",  month:"Nov '25" },
+  { date:"2025-11-05", desc:"Streaming Services",         cat:"Subscriptions",       amount:108.00, dir:"out", month:"Nov '25" },
+  { date:"2025-11-06", desc:"Night Out (bar)",            cat:"Entertainment & Nights Out", amount:80.00, dir:"out", month:"Nov '25" },
+  { date:"2025-11-07", desc:"Uber",                       cat:"Transport",           amount:24.00,  dir:"out", month:"Nov '25" },
+  { date:"2025-11-08", desc:"Haircut",                    cat:"Entertainment & Nights Out", amount:35.00, dir:"out", month:"Nov '25" },
+  { date:"2025-11-09", desc:"Train Tickets",              cat:"Transport",           amount:25.00,  dir:"out", month:"Nov '25" },
+  { date:"2025-11-10", desc:"Pharmacy",                   cat:"Healthcare",          amount:70.00,  dir:"out", month:"Nov '25" },
+  { date:"2025-11-11", desc:"Online Clothing",            cat:"Shopping",            amount:62.00,  dir:"out", month:"Nov '25" },
+  { date:"2025-11-15", desc:"Phone Contract",             cat:"Phone Bill",          amount:35.00,  dir:"out", month:"Nov '25" },
+  { date:"2025-11-15", desc:"Gym Membership",             cat:"Gym & Fitness",       amount:70.00,  dir:"out", month:"Nov '25" },
+  { date:"2025-11-15", desc:"Monthly Travelcard",         cat:"Transport",           amount:175.00, dir:"out", month:"Nov '25" },
+  { date:"2025-11-15", desc:"Supermarket",                cat:"Groceries",           amount:220.00, dir:"out", month:"Nov '25" },
+  { date:"2025-11-18", desc:"Restaurant",                 cat:"Eating Out & Cafes",  amount:115.00, dir:"out", month:"Nov '25" },
+  { date:"2025-11-20", desc:"Other spending",             cat:"Other",               amount:560.00, dir:"out", month:"Nov '25" },
+  // DECEMBER 2025
+  { date:"2025-12-01", desc:"Monthly Rent",               cat:"Rent",                amount:1000.00,dir:"out", month:"Dec '25" },
+  { date:"2025-12-03", desc:"Employer Salary",            cat:"Salary",              amount:2200.00,dir:"in",  month:"Dec '25" },
+  { date:"2025-12-05", desc:"Side Income",                cat:"Side Income",         amount:200.00, dir:"in",  month:"Dec '25" },
+  { date:"2025-12-05", desc:"Streaming Service",          cat:"Subscriptions",       amount:13.00,  dir:"out", month:"Dec '25" },
+  { date:"2025-12-07", desc:"Christmas Drinks (work)",    cat:"Entertainment & Nights Out", amount:40.00, dir:"out", month:"Dec '25" },
+  { date:"2025-12-10", desc:"Restaurant",                 cat:"Eating Out & Cafes",  amount:55.00,  dir:"out", month:"Dec '25" },
+  { date:"2025-12-12", desc:"Clothing Store",             cat:"Shopping",            amount:52.00,  dir:"out", month:"Dec '25" },
+  { date:"2025-12-14", desc:"GP Appointment",             cat:"Healthcare",          amount:30.00,  dir:"out", month:"Dec '25" },
+  { date:"2025-12-15", desc:"Phone Contract",             cat:"Phone Bill",          amount:35.00,  dir:"out", month:"Dec '25" },
+  { date:"2025-12-15", desc:"Gym Membership",             cat:"Gym & Fitness",       amount:70.00,  dir:"out", month:"Dec '25" },
+  { date:"2025-12-15", desc:"Monthly Travelcard",         cat:"Transport",           amount:175.00, dir:"out", month:"Dec '25" },
+  { date:"2025-12-15", desc:"Supermarket",                cat:"Groceries",           amount:210.00, dir:"out", month:"Dec '25" },
+  { date:"2025-12-18", desc:"Restaurants & Cafes",        cat:"Eating Out & Cafes",  amount:175.00, dir:"out", month:"Dec '25" },
+  { date:"2025-12-20", desc:"Train Tickets",              cat:"Transport",           amount:30.00,  dir:"out", month:"Dec '25" },
+  { date:"2025-12-22", desc:"Other spending",             cat:"Other",               amount:445.00, dir:"out", month:"Dec '25" },
+  { date:"2025-12-24", desc:"Streaming Services (extra)", cat:"Subscriptions",       amount:70.00,  dir:"out", month:"Dec '25" },
   // JANUARY 2026
-  { date:"2026-01-05", desc:"Thomas Knight (Rent)",        cat:"Rent",                amount:975.00, dir:"out", month:"Jan '26" },
-  { date:"2026-01-05", desc:"UCL / SLC Disbursement",      cat:"Stipend / Grants",    amount:1575.45,dir:"in",  month:"Jan '26" },
-  { date:"2026-01-02", desc:"Family Support (Jan)",        cat:"Family Support",      amount:300.00, dir:"in",  month:"Jan '26" },
-  { date:"2026-01-02", desc:"Other Income (Jan)",          cat:"Other Income",        amount:500.00, dir:"in",  month:"Jan '26" },
-  { date:"2026-01-05", desc:"LUL Travelcard (monthly)",    cat:"Transport",           amount:172.50, dir:"out", month:"Jan '26" },
-  { date:"2026-01-05", desc:"Uber Trip",                   cat:"Transport",           amount:11.93,  dir:"out", month:"Jan '26" },
-  { date:"2026-01-05", desc:"Friend Transfer",             cat:"Personal Transfers",  amount:25.00,  dir:"out", month:"Jan '26" },
-  { date:"2026-01-02", desc:"Amazon Prime",                cat:"Subscriptions",       amount:4.49,   dir:"out", month:"Jan '26" },
-  { date:"2026-01-02", desc:"Apple.com/bill",              cat:"Subscriptions",       amount:19.99,  dir:"out", month:"Jan '26" },
-  { date:"2026-01-08", desc:"Apple.com/bill (2nd)",        cat:"Subscriptions",       amount:8.99,   dir:"out", month:"Jan '26" },
-  { date:"2026-01-05", desc:"Flat Iron TCR",               cat:"Eating Out & Cafes",  amount:29.07,  dir:"out", month:"Jan '26" },
-  { date:"2026-01-05", desc:"250 ER Restaurant (daily)",   cat:"Eating Out & Cafes",  amount:32.45,  dir:"out", month:"Jan '26" },
-  { date:"2026-01-12", desc:"Royal Free London",           cat:"Healthcare",          amount:8.54,   dir:"out", month:"Jan '26" },
-  { date:"2026-01-15", desc:"O2 Phone Bill",               cat:"Phone Bill",          amount:37.64,  dir:"out", month:"Jan '26" },
-  { date:"2026-01-15", desc:"Fitness First / PureGym",     cat:"Gym & Fitness",       amount:69.00,  dir:"out", month:"Jan '26" },
-  { date:"2026-01-15", desc:"Transport (rest of Jan)",     cat:"Transport",           amount:92.28,  dir:"out", month:"Jan '26" },
-  { date:"2026-01-15", desc:"Groceries (Jan total)",       cat:"Groceries",           amount:139.20, dir:"out", month:"Jan '26" },
-  { date:"2026-01-15", desc:"Other spending (Jan)",        cat:"Other",               amount:189.50, dir:"out", month:"Jan '26" },
-  { date:"2026-01-15", desc:"Entertainment (Jan total)",   cat:"Entertainment & Nights Out", amount:80.00, dir:"out", month:"Jan '26" },
+  { date:"2026-01-01", desc:"Monthly Rent",               cat:"Rent",                amount:1000.00,dir:"out", month:"Jan '26" },
+  { date:"2026-01-03", desc:"Employer Salary",            cat:"Salary",              amount:2200.00,dir:"in",  month:"Jan '26" },
+  { date:"2026-01-05", desc:"Freelance Project",          cat:"Freelance",           amount:200.00, dir:"in",  month:"Jan '26" },
+  { date:"2026-01-05", desc:"Monthly Travelcard",         cat:"Transport",           amount:175.00, dir:"out", month:"Jan '26" },
+  { date:"2026-01-05", desc:"Uber",                       cat:"Transport",           amount:12.00,  dir:"out", month:"Jan '26" },
+  { date:"2026-01-05", desc:"Friend Transfer",            cat:"Personal Transfers",  amount:25.00,  dir:"out", month:"Jan '26" },
+  { date:"2026-01-06", desc:"Streaming Service",          cat:"Subscriptions",       amount:5.00,   dir:"out", month:"Jan '26" },
+  { date:"2026-01-07", desc:"Streaming Service (2nd)",    cat:"Subscriptions",       amount:20.00,  dir:"out", month:"Jan '26" },
+  { date:"2026-01-08", desc:"Streaming Service (3rd)",    cat:"Subscriptions",       amount:9.00,   dir:"out", month:"Jan '26" },
+  { date:"2026-01-09", desc:"Restaurant",                 cat:"Eating Out & Cafes",  amount:29.00,  dir:"out", month:"Jan '26" },
+  { date:"2026-01-10", desc:"Coffee Shop",                cat:"Eating Out & Cafes",  amount:33.00,  dir:"out", month:"Jan '26" },
+  { date:"2026-01-12", desc:"GP Appointment",             cat:"Healthcare",          amount:35.00,  dir:"out", month:"Jan '26" },
+  { date:"2026-01-15", desc:"Phone Contract",             cat:"Phone Bill",          amount:35.00,  dir:"out", month:"Jan '26" },
+  { date:"2026-01-15", desc:"Gym Membership",             cat:"Gym & Fitness",       amount:70.00,  dir:"out", month:"Jan '26" },
+  { date:"2026-01-15", desc:"Train Tickets",              cat:"Transport",           amount:88.00,  dir:"out", month:"Jan '26" },
+  { date:"2026-01-15", desc:"Supermarket",                cat:"Groceries",           amount:140.00, dir:"out", month:"Jan '26" },
+  { date:"2026-01-18", desc:"Other spending",             cat:"Other",               amount:190.00, dir:"out", month:"Jan '26" },
+  { date:"2026-01-20", desc:"Night Out",                  cat:"Entertainment & Nights Out", amount:80.00, dir:"out", month:"Jan '26" },
 ];
 
 // ── PALETTE ───────────────────────────────────────────────────────────────────
@@ -182,8 +198,8 @@ const CAT_COLORS = {
   "Entertainment & Nights Out":"#ec4899", Shopping:"#8b5cf6", Healthcare:"#14b8a6",
   Subscriptions:"#f97316", "Gym & Fitness":"#10b981", "Phone Bill":"#64748b",
   "Personal Transfers":"#a78bfa", Other:"#94a3b8",
-  "UCL Stipend":"#4ade80", "NHS Bursary":"#38bdf8", "Family Support":"#60a5fa",
-  "Student Loan":"#c084fc", "Other Income":"#94a3b8", "Stipend / Grants":"#4ade80",
+  Salary:"#4ade80", Freelance:"#38bdf8", "Side Income":"#60a5fa",
+  Bonus:"#c084fc", "Other Income":"#94a3b8",
 };
 const INC_COLORS = ["#4ade80","#38bdf8","#60a5fa","#c084fc","#94a3b8","#f9a8d4"];
 
@@ -205,13 +221,12 @@ const Tip = ({ active, payload, label }) => {
 
 // ── FORECAST DEFAULTS ────────────────────────────────────────────────────────
 const DEFAULT_FIXED = [
-  { id:"rent",    label:"Rent",                        amount:975,   icon:Home },
-  { id:"phone",   label:"Phone Bill (O2)",              amount:37.64, icon:Smartphone },
-  { id:"spotify", label:"Spotify Family Plan",          amount:21.99, icon:Music,    note:"↑ £21.99 since Nov 2025" },
-  { id:"netflix", label:"Netflix Standard (2 screens)", amount:12.99, icon:Tv },
-  { id:"apple",   label:"Apple Services",               amount:19.99, icon:Cloud,    note:"iCloud/TV+" },
-  { id:"gym",     label:"Gym & Fitness",                amount:69.00, icon:Dumbbell },
-  { id:"amazon",  label:"Amazon Prime",                 amount:4.49,  icon:Package },
+  { id:"rent",    label:"Rent",                amount:1000, icon:Home },
+  { id:"phone",   label:"Phone Contract",      amount:35,   icon:Smartphone },
+  { id:"stream1", label:"Streaming Service A", amount:13,   icon:Tv },
+  { id:"stream2", label:"Streaming Service B", amount:20,   icon:Music },
+  { id:"cloud",   label:"Cloud Storage",       amount:5,    icon:Cloud },
+  { id:"gym",     label:"Gym Membership",      amount:70,   icon:Dumbbell },
 ];
 const DEFAULT_VAR = [
   { id:"groceries", label:"Groceries (£40/wk)",     amount:173.33, icon:ShoppingCart },
@@ -232,47 +247,148 @@ const THEMES = [
   { id:"amber",    label:"Amber",    color:"#f59e0b" },
 ];
 
+const CURRENCIES = [
+  { code:"GBP", symbol:"£" },
+  { code:"USD", symbol:"$" },
+  { code:"EUR", symbol:"€" },
+];
+
 // ── SUBSCRIPTIONS DATA ────────────────────────────────────────────────────────
 const SUBSCRIPTIONS = [
-  { name:"Spotify Family Plan",    monthly:21.99, annual:263.88, icon:Music,      optional:true },
-  { name:"Netflix Standard",       monthly:12.99, annual:155.88, icon:Tv,         optional:true },
-  { name:"Apple Services",         monthly:19.99, annual:239.88, icon:Cloud,      optional:true,  note:"iCloud/TV+" },
-  { name:"PlayStation Network",    monthly:13.99, annual:167.88, icon:Gamepad2,   optional:true },
-  { name:"Amazon Prime",           monthly:4.49,  annual:53.88,  icon:Package,    optional:true },
-  { name:"LinkedIn Premium",       monthly:0,     annual:49.99,  icon:Briefcase,  optional:true,  note:"seen once Sep" },
-  { name:"O2 Phone",               monthly:37.64, annual:451.68, icon:Smartphone, optional:false, note:"contract" },
-  { name:"Fitness First + PureGym",monthly:69.00, annual:828.00, icon:Dumbbell,   optional:true,  note:"TWO gyms!" },
+  { name:"Streaming Service A",    monthly:13.00, annual:156.00, icon:Tv,         optional:true },
+  { name:"Streaming Service B",    monthly:20.00, annual:240.00, icon:Music,      optional:true },
+  { name:"Cloud Storage",          monthly:5.00,  annual:60.00,  icon:Cloud,      optional:true },
+  { name:"Gaming Subscription",    monthly:14.00, annual:168.00, icon:Gamepad2,   optional:true },
+  { name:"Professional Plan",      monthly:9.00,  annual:108.00, icon:Briefcase,  optional:true },
+  { name:"Phone Contract",         monthly:35.00, annual:420.00, icon:Smartphone, optional:false, note:"contract" },
+  { name:"Gym Membership",         monthly:70.00, annual:840.00, icon:Dumbbell,   optional:true },
 ];
 
 
+// ── BANK FORMAT DETECTION ─────────────────────────────────────────────────────
+const BANK_FORMATS = [
+  {
+    name: "Lloyds",
+    detect: h => h.includes("Transaction Date") && h.includes("Transaction Description"),
+    normalise: row => ({
+      dateStr: row["Transaction Date"] || "",
+      desc: (row["Transaction Description"] || "").trim(),
+      debit:  parseFloat(row["Debit Amount"]  || 0) || 0,
+      credit: parseFloat(row["Credit Amount"] || 0) || 0,
+      bal:    parseFloat(row["Balance"]       || 0) || 0,
+    }),
+    newestFirst: true,
+  },
+  {
+    name: "Monzo",
+    detect: h => h.includes("Date") && h.includes("Name") && h.includes("Amount") && !h.includes("Transaction Date"),
+    normalise: row => {
+      const amt = parseFloat(row["Amount"] || 0);
+      return {
+        dateStr: row["Date"] || "",
+        desc: (row["Name"] || row["Description"] || "").trim(),
+        debit:  amt < 0 ? Math.abs(amt) : 0,
+        credit: amt > 0 ? amt : 0,
+        bal:    parseFloat(row["Balance"] || 0) || 0,
+      };
+    },
+    newestFirst: false,
+  },
+  {
+    name: "Starling",
+    detect: h => h.includes("Counter Party") && h.includes("Amount (GBP)"),
+    normalise: row => {
+      const amt = parseFloat(row["Amount (GBP)"] || 0);
+      return {
+        dateStr: row["Date"] || "",
+        desc: (row["Counter Party"] || row["Reference"] || "").trim(),
+        debit:  amt < 0 ? Math.abs(amt) : 0,
+        credit: amt > 0 ? amt : 0,
+        bal:    parseFloat(row["Balance (GBP)"] || 0) || 0,
+      };
+    },
+    newestFirst: false,
+  },
+  {
+    name: "HSBC",
+    detect: h => h.includes("Paid Out") && h.includes("Paid In"),
+    normalise: row => ({
+      dateStr: row["Date"] || "",
+      desc: (row["Description"] || "").trim(),
+      debit:  parseFloat((row["Paid Out"] || "0").replace(/[^0-9.-]/g, "")) || 0,
+      credit: parseFloat((row["Paid In"]  || "0").replace(/[^0-9.-]/g, "")) || 0,
+      bal:    parseFloat((row["Balance"]  || "0").replace(/[^0-9.-]/g, "")) || 0,
+    }),
+    newestFirst: false,
+  },
+  {
+    name: "NatWest",
+    detect: h => h.includes("Value") && h.includes("Description") && !h.includes("Transaction Description"),
+    normalise: row => {
+      const val = parseFloat(row["Value"] || 0);
+      return {
+        dateStr: row["Date"] || "",
+        desc: (row["Description"] || "").trim(),
+        debit:  val < 0 ? Math.abs(val) : 0,
+        credit: val > 0 ? val : 0,
+        bal:    parseFloat(row["Balance"] || 0) || 0,
+      };
+    },
+    newestFirst: false,
+  },
+];
+
+const parseDateStr = (dateStr) => {
+  // Handles DD/MM/YYYY, YYYY-MM-DD, DD MMM YYYY (e.g. "15 Jan 2026")
+  const MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  if (!dateStr) return null;
+  if (/^\d{2} \w{3} \d{4}$/.test(dateStr.trim())) {
+    const [dd, mon, yyyy] = dateStr.trim().split(" ");
+    const mm = String(MO.indexOf(mon) + 1).padStart(2, "0");
+    return { dd: dd.padStart(2,"0"), mm, yyyy };
+  }
+  const sep = dateStr.includes("/") ? "/" : "-";
+  const parts = dateStr.split(sep);
+  if (parts.length !== 3) return null;
+  if (parts[0].length === 4) return { dd: parts[2].padStart(2,"0"), mm: parts[1].padStart(2,"0"), yyyy: parts[0] };
+  return { dd: parts[0].padStart(2,"0"), mm: parts[1].padStart(2,"0"), yyyy: parts[2] };
+};
+
 const parseCSV = (text) => {
   const { data } = Papa.parse(text.trim(), { header: true, skipEmptyLines: true });
+  if (!data.length) throw new Error("File appears empty — no rows found.");
+
+  const headers = Object.keys(data[0] || {});
+  const format = BANK_FORMATS.find(f => f.detect(headers));
+  if (!format) {
+    throw new Error(`Unrecognised CSV format. Supported banks: Lloyds, Monzo, Starling, HSBC, NatWest.\nDetected columns: ${headers.join(", ")}`);
+  }
+
   const MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const txs = [];
   const map = {};
 
   data.forEach(row => {
-    const dateStr = row["Transaction Date"] || row["Date"] || "";
-    const desc    = (row["Transaction Description"] || row["Description"] || "").trim();
-    const debit   = parseFloat(row["Debit Amount"]  || row["Debit"]  || 0) || 0;
-    const credit  = parseFloat(row["Credit Amount"] || row["Credit"] || 0) || 0;
-    const bal     = parseFloat(row["Balance"] || 0) || 0;
+    const { dateStr, desc, debit, credit, bal } = format.normalise(row);
     if (!dateStr || (!debit && !credit)) return;
 
-    const parts = dateStr.includes("/") ? dateStr.split("/") : dateStr.split("-");
-    // Handle DD/MM/YYYY and YYYY-MM-DD
-    const [dd, mm, yyyy] = parts.length === 3 && parts[0].length === 4
-      ? [parts[2], parts[1], parts[0]]   // YYYY-MM-DD
-      : [parts[0], parts[1], parts[2]];  // DD/MM/YYYY
-    if (!dd || !mm || !yyyy) return;
+    const parsed = parseDateStr(dateStr);
+    if (!parsed) return;
+    const { dd, mm, yyyy } = parsed;
 
-    const label = `${MO[parseInt(mm) - 1]} '${yyyy.slice(2)}`;
-    const iso   = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+    const moIdx = parseInt(mm) - 1;
+    const label = `${MO[moIdx]} '${yyyy.slice(2)}`;
+    const iso   = `${yyyy}-${mm}-${dd}`;
 
     if (!map[label]) {
-      // Lloyds exports newest-first: first seen balance = month-end balance ✓
-      map[label] = { income:0, spending:0, cats:{}, incSrc:{}, balanceEnd: bal,
+      map[label] = { income:0, spending:0, cats:{}, incSrc:{}, balanceEnd: 0,
                      monthNum: parseInt(mm), yearNum: parseInt(yyyy) };
+    }
+    // For newest-first exports (Lloyds), first seen = month-end. For others, last seen = month-end.
+    if (format.newestFirst) {
+      if (map[label].balanceEnd === 0) map[label].balanceEnd = bal;
+    } else {
+      map[label].balanceEnd = bal;
     }
 
     if (credit > 0) {
@@ -303,6 +419,11 @@ const parseCSV = (text) => {
   const categories = Object.fromEntries(months.map(([l, d]) => [l, d.cats]));
   const income     = Object.fromEntries(months.map(([l, d]) => [l, d.incSrc]));
   const lastBal    = months[months.length - 1]?.[1]?.balanceEnd ?? 0;
+
+  if (!txs.length) {
+    const cols = Object.keys(data[0] || {}).join(", ");
+    throw new Error(`No valid transactions found. Check the file is a bank export CSV.\nDetected columns: ${cols || "(none)"}`);
+  }
 
   return {
     summary, categories, income,
@@ -447,11 +568,86 @@ function GoalInput({ goal, setGoals }) {
   );
 }
 
+// ── GOAL ICONS MAP ───────────────────────────────────────────────────────────
+const GOAL_ICONS = { Shield, Plane, Laptop, Star, Target, Home, Zap, Package, GraduationCap, Wallet, Dumbbell, ShoppingBag };
+
+// ── GOAL EDITOR MODAL ─────────────────────────────────────────────────────────
+function GoalEditorModal({ goal, onSave, onDelete, onClose }) {
+  const isNew = !goal.id;
+  const [name,    setName]    = useState(goal.name    ?? "");
+  const [target,  setTarget]  = useState(goal.target  ?? 500);
+  const [date,    setDate]    = useState(goal.date    ?? "");
+  const [iconKey, setIconKey] = useState(goal.iconKey ?? "Target");
+
+  const handleSave = () => {
+    if (!name.trim() || target <= 0) return;
+    onSave({ id: goal.id ?? Date.now(), name: name.trim(), target: Number(target), date, iconKey, saved: goal.saved ?? 0 });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm shadow-2xl">
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-base font-bold text-white">{isNew ? "Add Goal" : "Edit Goal"}</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={18}/></button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs text-gray-400 mb-1.5 block">Goal name</label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Emergency Fund"
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
+          </div>
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+            <div>
+              <label className="text-xs text-gray-400 mb-1.5 block">Target amount (£)</label>
+              <input type="number" value={target} onChange={e => setTarget(e.target.value)} min="1"
+                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1.5 block">Target date</label>
+              <input type="month" value={date.length === 8 ? "" : date} onChange={e => setDate(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-1.5 block">Icon</label>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(GOAL_ICONS).map(([key, Icon]) => (
+                <button key={key} onClick={() => setIconKey(key)}
+                  className={`p-2 rounded-lg border transition-all ${iconKey === key ? "border-indigo-500 bg-indigo-900/40" : "border-gray-700 bg-gray-800 hover:border-gray-500"}`}>
+                  <Icon size={16} className={iconKey === key ? "text-indigo-400" : "text-gray-400"}/>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={handleSave}
+            className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 text-sm font-semibold transition-all">
+            {isNew ? "Add Goal" : "Save Changes"}
+          </button>
+          {!isNew && (
+            <button onClick={() => { onDelete(goal.id); onClose(); }}
+              className="px-4 py-2.5 rounded-xl text-sm text-red-400 border border-red-800 hover:bg-red-900/30 transition-all">
+              Delete
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── MAIN ─────────────────────────────────────────────────────────────────────
 export default function SpendingTracker() {
   const [tab, setTab]             = useState("dashboard");
   const [themeId, setThemeId]     = useState(() => localStorage.getItem("theme") ?? "indigo");
-  const [selMonth, setSelMonth]   = useState("Jan '26");
+  const [currencyCode, setCurrencyCode] = useState(() => localStorage.getItem("currency") ?? "GBP");
+  const sym = CURRENCIES.find(c => c.code === currencyCode)?.symbol ?? "£";
+  const fmt  = n => `${sym}${Math.abs(n).toFixed(2)}`;
+  const fmtK = n => n >= 1000 ? `${sym}${(n/1000).toFixed(1)}k` : `${sym}${Math.round(n)}`;
+  const [selMonth, setSelMonth]   = useState(DEFAULT_MONTHLY_SUMMARY[DEFAULT_MONTHLY_SUMMARY.length - 1].label);
   const [search, setSearch]       = useState("");
   const [filterCat, setFilterCat] = useState("All");
   const [filterDir, setFilterDir] = useState("All");
@@ -461,20 +657,30 @@ export default function SpendingTracker() {
   const [horizonMonths, setHorizonMonths]   = useState(6);
   const [planView, setPlanView]             = useState("forecast");
   const [goals, setGoals] = useState(() => {
-    const saved = (() => { try { return JSON.parse(localStorage.getItem("goalSaved") ?? "{}"); } catch { return {}; } })();
+    try {
+      const saved = JSON.parse(localStorage.getItem("goals") ?? "null");
+      if (saved?.length) return saved;
+    } catch {}
     return [
-      { id:1, name:"Emergency Fund", icon:Shield, target:3000, date:"Jun 2026", saved: saved[1] ?? 0 },
-      { id:2, name:"Summer Holiday", icon:Plane,  target:800,  date:"Jul 2026", saved: saved[2] ?? 0 },
-      { id:3, name:"New Laptop",     icon:Laptop, target:1200, date:"Sep 2026", saved: saved[3] ?? 0 },
+      { id:1, name:"Emergency Fund", iconKey:"Shield", target:3000, date:"2026-06", saved:0 },
+      { id:2, name:"Summer Holiday", iconKey:"Plane",  target:800,  date:"2026-07", saved:0 },
+      { id:3, name:"New Laptop",     iconKey:"Laptop", target:1200, date:"2026-09", saved:0 },
     ];
   });
+  const [showGoalEditor, setShowGoalEditor] = useState(false);
+  const [editingGoal,    setEditingGoal]    = useState(null);
   // subToggles: true = marked for cancellation, false = keep
   const [subToggles, setSubToggles]         = useState({});
   const [affordabilityItem, setAffordabilityItem]   = useState("");
   const [affordabilityAmount, setAffordabilityAmount] = useState("");
   const [affordabilityDate, setAffordabilityDate]     = useState("");
   const [spreadMonths, setSpreadMonths]     = useState(6);
-  const [importedData, setImportedData]     = useState(null);
+  const [importedData, setImportedData]     = useState(() => {
+    try {
+      const raw = localStorage.getItem("spendingData");
+      return raw ? JSON.parse(raw) : null;
+    } catch { localStorage.removeItem("spendingData"); return null; }
+  });
   const [showImport, setShowImport]         = useState(false);
   const [dragOver, setDragOver]             = useState(false);
   const [importPreview, setImportPreview]   = useState(null);
@@ -485,6 +691,7 @@ export default function SpendingTracker() {
   });
   const [bannerDismissed, setBannerDismissed] = useState(() => !!localStorage.getItem("bannerDismissed"));
   const [importSuccess, setImportSuccess]     = useState(false);
+  const [csvError, setCsvError]               = useState(null);
   const csvInputRef                         = useRef(null);
   const overviewRef                         = useRef(null);
 
@@ -513,19 +720,9 @@ export default function SpendingTracker() {
   }, [ALL_TRANSACTIONS, importedData, txCatOverrides]);
   const MONTHS             = MONTHLY_SUMMARY.map(m => m.label);
 
-  // ── RESTORE FROM localStorage ON MOUNT ──────────────────────────────────
+  // ── PERSIST GOALS ────────────────────────────────────────────────────────────
   useEffect(() => {
-    const saved = localStorage.getItem("spendingData");
-    if (saved) {
-      try { setImportedData(JSON.parse(saved)); }
-      catch { localStorage.removeItem("spendingData"); }
-    }
-  }, []);
-
-  // ── PERSIST GOAL SAVED AMOUNTS ──────────────────────────────────────────────
-  useEffect(() => {
-    const amounts = Object.fromEntries(goals.map(g => [g.id, g.saved]));
-    localStorage.setItem("goalSaved", JSON.stringify(amounts));
+    localStorage.setItem("goals", JSON.stringify(goals));
   }, [goals]);
 
   // ── SYNC selMonth WHEN DATA CHANGES ────────────────────────────────────────
@@ -538,11 +735,16 @@ export default function SpendingTracker() {
 
   // ── CSV HANDLER ───────────────────────────────────────────────────────────
   const handleCSVFile = (file) => {
-    if (!file || !file.name.toLowerCase().endsWith(".csv")) return;
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setCsvError("Please select a .csv file. Other formats are not supported.");
+      return;
+    }
+    setCsvError(null);
     const reader = new FileReader();
     reader.onload = (e) => {
       try { setImportPreview(parseCSV(e.target.result)); }
-      catch (err) { console.error("CSV parse error:", err); }
+      catch (err) { setCsvError(err.message); }
     };
     reader.readAsText(file);
   };
@@ -566,7 +768,7 @@ export default function SpendingTracker() {
   const historicSpend   = MONTHLY_SUMMARY.reduce((s,m) => s+m.spending, 0);
   const avgSpend        = historicSpend / MONTHLY_SUMMARY.length;
   const avgIncome       = historicIncome / MONTHLY_SUMMARY.length;
-  const currentBalance  = importedData?.currentBalance ?? 2223.62;
+  const currentBalance  = importedData?.currentBalance ?? DEFAULT_MONTHLY_SUMMARY[DEFAULT_MONTHLY_SUMMARY.length - 1].balanceEnd;
 
   const runway = currentBalance / avgSpend;
   const leftToSpend = currentBalance - totalFixed;
@@ -831,6 +1033,17 @@ export default function SpendingTracker() {
   }, [MONTHLY_SUMMARY, MONTHLY_CATEGORIES, fixedCosts, varCosts]);
 
   const monthBreach  = forecastData.find(d => d.Balance < 0);
+
+  // ── OTHER CATEGORY PROMPT ────────────────────────────────────────────────
+  const otherPromptMonth = useMemo(() => {
+    for (const mo of MONTHLY_SUMMARY) {
+      const cats = MONTHLY_CATEGORIES[mo.label] || {};
+      const totalSpend = Object.values(cats).reduce((s, v) => s + v, 0);
+      const otherSpend = cats["Other"] || 0;
+      if (totalSpend > 0 && otherSpend / totalSpend > 0.20) return mo.label;
+    }
+    return null;
+  }, [MONTHLY_CATEGORIES, MONTHLY_SUMMARY]);
   const updateFixed  = (id, v) => setFixedCosts(p => p.map(c => c.id===id ? {...c, amount:Number(v)} : c));
   const updateVar    = (id, v) => setVarCosts(p => p.map(c => c.id===id ? {...c, amount:Number(v)} : c));
   const bCol = b => b > 1000 ? "#22c55e" : b > 300 ? "#f59e0b" : "#ef4444";
@@ -848,6 +1061,38 @@ export default function SpendingTracker() {
     link.download = `spending-overview-${new Date().toISOString().slice(0,10)}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
+  };
+
+  // ── JSON EXPORT / IMPORT ─────────────────────────────────────────────────
+  const jsonInputRef = useRef(null);
+
+  const handleExportJSON = () => {
+    const state = { version:1, exportedAt: new Date().toISOString(), importedData, txCatOverrides, goals, currencyCode, themeId };
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `spending-tracker-${new Date().toISOString().slice(0,10)}.json`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportJSON = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const state = JSON.parse(e.target.result);
+        if (state.version !== 1) throw new Error("Unsupported backup version.");
+        if (state.importedData) { setImportedData(state.importedData); localStorage.setItem("spendingData", JSON.stringify(state.importedData)); }
+        if (state.txCatOverrides) { setTxCatOverrides(state.txCatOverrides); localStorage.setItem("catOverrides", JSON.stringify(state.txCatOverrides)); }
+        if (state.goals?.length) setGoals(state.goals);
+        if (state.currencyCode) { setCurrencyCode(state.currencyCode); localStorage.setItem("currency", state.currencyCode); }
+        if (state.themeId) { setThemeId(state.themeId); localStorage.setItem("theme", state.themeId); }
+        setShowImport(false);
+      } catch (err) {
+        setCsvError(`Backup restore failed: ${err.message}`);
+      }
+    };
+    reader.readAsText(file);
   };
 
   // ── REASSIGN OTHER TRANSACTIONS ──────────────────────────────────────────
@@ -897,7 +1142,7 @@ export default function SpendingTracker() {
         {/* HEADER */}
         <div className="mb-5 flex justify-between items-end flex-wrap gap-3">
           <div>
-            <h1 className="text-3xl font-bold"><span className="text-indigo-400">£</span> Spending Tracker</h1>
+            <h1 className="text-3xl font-bold"><span className="text-indigo-400">{sym}</span> Spending Tracker</h1>
             <p className="text-gray-400 text-sm mt-0.5">
               {importedData
                 ? `Imported · ${importedData.monthCount} months · ${importedData.transactions.length} transactions`
@@ -919,6 +1164,10 @@ export default function SpendingTracker() {
                 <Download size={13}/> Export PNG
               </button>
             )}
+            <button onClick={handleExportJSON}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white transition-all">
+              <Download size={13}/> Backup
+            </button>
             <div className="flex items-center gap-1.5 bg-gray-900 border border-gray-800 rounded-xl px-2.5 py-2">
               {THEMES.map(t => (
                 <button key={t.id} title={t.label}
@@ -927,8 +1176,12 @@ export default function SpendingTracker() {
                   style={{backgroundColor: t.color}}/>
               ))}
             </div>
+            <select value={currencyCode} onChange={e => { setCurrencyCode(e.target.value); localStorage.setItem("currency", e.target.value); }}
+              className="bg-gray-900 border border-gray-800 rounded-xl px-2.5 py-2 text-sm text-gray-300 focus:outline-none focus:border-indigo-500">
+              {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} {c.code}</option>)}
+            </select>
             {[
-              { label:"Current Balance",  value:fmt(currentBalance),   sub: importedData ? "latest balance" : "31 Jan 2026", color:"text-emerald-400" },
+              { label:"Current Balance",  value:fmt(currentBalance),   sub: importedData ? "latest balance" : `end of ${MONTHS[MONTHS.length-1]}`, color:"text-emerald-400" },
               { label:`${MONTHLY_SUMMARY.length}-Month Total In`, value:fmt(historicIncome), sub:"all income sources", color:"text-blue-400" },
             ].map(c => (
               <div key={c.label} className="bg-gray-900 rounded-xl px-4 py-2.5 text-right">
@@ -997,7 +1250,7 @@ export default function SpendingTracker() {
             )}
 
             {/* ── LEFT TO SPEND + COMMITTED ── */}
-            <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
               {/* Hero: Left to Spend */}
               <div className="bg-gradient-to-br from-emerald-900 to-teal-900 rounded-2xl p-5 border border-emerald-700/40 shadow-xl">
                 <div className="flex items-center gap-2 mb-1">
@@ -1042,6 +1295,23 @@ export default function SpendingTracker() {
               <ChevronRight size={18} className="text-indigo-400 group-hover:translate-x-1 transition-transform"/>
             </button>
 
+            {/* ── OTHER CATEGORY PROMPT ── */}
+            {otherPromptMonth && (
+              <div className="bg-purple-900/30 border border-purple-700 rounded-2xl p-4 flex items-start justify-between gap-3">
+                <div className="flex gap-3 items-start">
+                  <AlertTriangle size={18} className="text-purple-400 flex-shrink-0 mt-0.5"/>
+                  <div>
+                    <div className="font-semibold text-purple-300 text-sm">"Other" is over 20% of {otherPromptMonth} spending</div>
+                    <div className="text-purple-400/70 text-xs mt-0.5">Drill down to reassign uncategorised transactions and get more accurate insights.</div>
+                  </div>
+                </div>
+                <button onClick={() => { setTab("breakdown"); setSelMonth(otherPromptMonth); setOtherDrillMonth(otherPromptMonth); }}
+                  className="text-purple-300 border border-purple-700 hover:border-purple-500 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0">
+                  Review →
+                </button>
+              </div>
+            )}
+
             {/* ── LAST MONTH REVIEW CARD ── */}
             {lastMonthReview && (
               <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
@@ -1069,7 +1339,7 @@ export default function SpendingTracker() {
               </div>
             )}
 
-            <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr 1fr"}}>
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
               <div className="bg-gradient-to-br from-indigo-900 to-indigo-800 rounded-2xl p-4 shadow-xl">
                 <div className="flex justify-between items-start mb-3">
                   <div>
@@ -1115,7 +1385,7 @@ export default function SpendingTracker() {
               </ResponsiveContainer>
             </motion.div>
 
-            <div className="grid gap-4" style={{gridTemplateColumns:"1.3fr 1fr"}}>
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
               <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.07,duration:0.3}}>
                 <h2 className="text-base font-semibold mb-3">Account Balance (month-end)</h2>
                 <ResponsiveContainer width="100%" height={200}>
@@ -1186,15 +1456,16 @@ export default function SpendingTracker() {
             </div>
 
             <div className="bg-gray-900 rounded-2xl p-5">
-              <h2 className="text-base font-semibold mb-3 flex items-center gap-2"><Search size={15} className="text-gray-400"/> Sample Data Highlights</h2>
-              <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr"}}>
+              <h2 className="text-base font-semibold mb-1 flex items-center gap-2"><Search size={15} className="text-gray-400"/> About the Sample Data</h2>
+              <p className="text-gray-500 text-xs mb-3">This is fictional demo data for "Alex", a junior software developer in London. Import your own CSV to see your real picture.</p>
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 {[
-                  { icon:Stethoscope, title:"Irregular income pattern",      body:"Some months include a healthcare bursary on top of the regular stipend — income swings significantly between months. Always plan around the minimum.",  color:"text-sky-400" },
-                  { icon:Train,       title:"Fixed transport cost",           body:"A monthly travelcard appears as a precise recurring charge. Transport spikes in months with higher Uber usage — worth tracking separately.", color:"text-blue-400" },
-                  { icon:AlertTriangle,title:"One critical deficit month",    body:`${worstMonth?.label}: only ${fmt(worstMonth?.income||0)} in vs ${fmt(worstMonth?.spending||0)} out — a ${fmt(Math.abs(worstMonth?.net||0))} deficit. A strong prior month absorbed the gap.`, color:"text-amber-400" },
-                  { icon:TrendingDown, title:"Best month shows what's possible", body:`${bestMonth?.label}: lowest spending in the dataset and a positive net of ${fmt(bestMonth?.net||0)}. Shows what discipline delivers.`,              color:"text-emerald-400" },
-                  { icon:Dumbbell,    title:"Duplicate subscription category", body:"Two gym memberships appear simultaneously across multiple months. Consolidating to one would save £400+/year.",              color:"text-orange-400" },
-                  { icon:Package,     title:"'Other' category needs review",  body:"One month shows £1,134 in untracked 'Other' spending. Use the drill-down to reassign transactions and get accurate category totals.",   color:"text-purple-400" },
+                  { icon:Stethoscope, title:"Variable income",          body:"Salary is the main source but freelance and bonuses create big swings. Aug and Nov show months where income dropped sharply — important to plan a buffer.", color:"text-sky-400" },
+                  { icon:Train,       title:"Transport as a swing cost", body:"A monthly travelcard is the base, but Uber and train tickets push total transport well above budget in busier months.", color:"text-blue-400" },
+                  { icon:AlertTriangle,title:"One critical deficit month", body:`${worstMonth?.label}: only ${fmt(worstMonth?.income||0)} in vs ${fmt(worstMonth?.spending||0)} out — a ${fmt(Math.abs(worstMonth?.net||0))} deficit. A strong prior month covered the gap.`, color:"text-amber-400" },
+                  { icon:TrendingDown, title:"Best month shows what's possible", body:`${bestMonth?.label}: the highest net in the dataset at +${fmt(bestMonth?.net||0)}. Freelance income on top of salary makes the difference.`, color:"text-emerald-400" },
+                  { icon:Package,     title:"'Other' needs a review",    body:"October shows over £1,100 in uncategorised 'Other' spending. Use the drill-down in Breakdown to reassign and get accurate category totals.", color:"text-purple-400" },
+                  { icon:Dumbbell,    title:"Subscriptions add up fast", body:`${fmt(SUBSCRIPTIONS.reduce((s,sub)=>s+sub.annual,0))} per year across all subscriptions. Toggle any in Goals & Health to see your savings.`, color:"text-orange-400" },
                 ].map(i => {
                   const IIcon = i.icon;
                   return (
@@ -1271,7 +1542,7 @@ export default function SpendingTracker() {
               const incomeData = Object.entries(INCOME_BREAKDOWN[selMonth] || {}).map(([name, value]) => ({ name, value }));
               return (
                 <>
-                  <div className="grid gap-3" style={{gridTemplateColumns:"repeat(4,1fr)"}}>
+                  <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
                     {[
                       { label:"Income",           value:ms.income,    color:"text-green-400" },
                       { label:"Spending",          value:ms.spending,  color:"text-red-400" },
@@ -1285,7 +1556,7 @@ export default function SpendingTracker() {
                     ))}
                   </div>
 
-                  <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1fr"}}>
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                     <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
                       {!weeklyView ? (
                         <>
@@ -1477,12 +1748,12 @@ export default function SpendingTracker() {
                 </select>
                 <span className="text-gray-500 text-sm">{filteredTxs.length} entries</span>
               </div>
-              <div className="bg-gray-900 rounded-2xl overflow-hidden">
-                <div className="grid text-xs font-semibold text-gray-500 uppercase px-5 py-3 border-b border-gray-800"
+              <div className="bg-gray-900 rounded-2xl overflow-hidden overflow-x-auto">
+                <div className="grid text-xs font-semibold text-gray-500 uppercase px-5 py-3 border-b border-gray-800 min-w-[600px]"
                   style={{gridTemplateColumns:"90px 70px 1fr 160px 80px 100px"}}>
                   <span>Date</span><span>Month</span><span>Description</span><span>Category</span><span>Type</span><span className="text-right">Amount</span>
                 </div>
-                <div className="max-h-96 overflow-y-auto divide-y divide-gray-800/40">
+                <div className="max-h-96 overflow-y-auto divide-y divide-gray-800/40 min-w-[600px]">
                   {filteredTxs.map((tx, i) => (
                     <div key={`${tx.date}:${tx.desc}:${tx.amount}:${i}`} className="grid items-center px-5 py-2.5 hover:bg-gray-800/50 text-sm"
                       style={{gridTemplateColumns:"90px 70px 1fr 160px 80px 100px"}}>
@@ -1553,11 +1824,11 @@ export default function SpendingTracker() {
             {planView === "forecast" && (<>
             <div className="bg-gray-900 rounded-2xl p-5">
               <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><Film size={15} className="text-gray-400"/> Scenario Planning</h2>
-              <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
                 {[
-                  { label:"Best Case",    income:3500, desc:"Multiple income sources" },
-                  { label:"Normal Month", income:2200, desc:"Single main income" },
-                  { label:"Hard Month",   income:811,  desc:"Minimal income month" },
+                  { label:"Best Case",    income:4000, desc:"Salary + freelance + bonus" },
+                  { label:"Normal Month", income:2200, desc:"Salary only" },
+                  { label:"Hard Month",   income:800,  desc:"Minimal income month" },
                 ].map(s => (
                   <button key={s.label} onClick={() => setMonthlyIncome(s.income)}
                     className={`p-4 rounded-xl border transition-all text-left ${
@@ -1573,7 +1844,7 @@ export default function SpendingTracker() {
               </div>
             </div>
 
-            <div className="bg-gray-900 rounded-2xl p-5 grid gap-4" style={{gridTemplateColumns:"1fr 1fr"}}>
+            <div className="bg-gray-900 rounded-2xl p-5 grid gap-4 grid-cols-1 sm:grid-cols-2">
               <div>
                 <label className="text-xs text-gray-400 mb-1.5 block">Expected Monthly Income (£)</label>
                 <input type="number" value={monthlyIncome} onChange={e => setMonthlyIncome(Number(e.target.value))}
@@ -1588,8 +1859,7 @@ export default function SpendingTracker() {
               </div>
             </div>
 
-            <div className={`rounded-2xl p-4 border grid gap-4 ${projectedNet >= 0 ? "bg-emerald-900/20 border-emerald-800" : "bg-red-900/20 border-red-800"}`}
-              style={{gridTemplateColumns:"repeat(4,1fr)"}}>
+            <div className={`rounded-2xl p-4 border grid gap-4 grid-cols-2 sm:grid-cols-4 ${projectedNet >= 0 ? "bg-emerald-900/20 border-emerald-800" : "bg-red-900/20 border-red-800"}`}>
               {[
                 { label:"Monthly Income",  value:monthlyIncome,  color:"text-green-400" },
                 { label:"Fixed Costs",      value:totalFixed,     color:"text-indigo-400" },
@@ -1648,7 +1918,7 @@ export default function SpendingTracker() {
                   <div className="text-lg font-bold text-amber-400">{fmt(totalVar)}/mo</div>
                 </div>
               </div>
-              <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr"}}>
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 {varCosts.map(c => {
                   const Icon = c.icon;
                   const hist = catTotals.find(([cat]) => cat === c.label.split(" (")[0] || cat === c.label);
@@ -1659,7 +1929,7 @@ export default function SpendingTracker() {
                         <Icon size={15} className="text-amber-400"/>
                         <span className="text-sm font-medium text-white">{c.label}</span>
                       </div>
-                      {avg8 > 0 && <div className="text-xs text-gray-500 mb-2">8-mo avg actual: <span className="text-gray-300">{fmt(avg8)}/mo</span></div>}
+                      {avg8 > 0 && <div className="text-xs text-gray-500 mb-2">{MONTHLY_SUMMARY.length}-mo avg actual: <span className="text-gray-300">{fmt(avg8)}/mo</span></div>}
                       <div className="flex items-center gap-2">
                         <span className="text-gray-500 text-xs">£</span>
                         <input type="number" value={c.amount} step="5"
@@ -1716,7 +1986,7 @@ export default function SpendingTracker() {
 
             <div className="bg-gray-900 rounded-2xl p-5">
               <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><Calendar size={15} className="text-gray-400"/> Annual Planning Summary</h2>
-              <div className="grid gap-3" style={{gridTemplateColumns:"repeat(3,1fr)"}}>
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
                 {[
                   { label:"Projected Annual Income",  value:monthlyIncome * 12,             color:"text-green-400" },
                   { label:"Projected Annual Spend",   value:totalProjected * 12,            color:"text-red-400" },
@@ -1741,7 +2011,7 @@ export default function SpendingTracker() {
                 <h2 className="text-base font-semibold flex items-center gap-2"><CreditCard size={15} className="text-gray-400"/> Can I Afford It? — Purchase Impact Simulator</h2>
                 <p className="text-gray-500 text-xs mt-1">See exactly what happens to your balance month-by-month if you make this purchase. Not just a yes/no — a full trajectory.</p>
               </div>
-              <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1fr 1fr 140px"}}>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <label className="text-xs text-gray-400 mb-2 block">What do you want to buy?</label>
                   <input type="text" placeholder="New phone, holiday, trainers..." value={affordabilityItem}
@@ -1791,7 +2061,7 @@ export default function SpendingTracker() {
                           {purchaseSimulation.verdict === "TIGHT" && <p className="text-amber-400 text-xs mt-2">You can cover it, but your safety buffer drops below £500. Consider spreading the cost.</p>}
                           {purchaseSimulation.verdict === "COMFORTABLE" && <p className="text-emerald-400 text-xs mt-2">Your balance stays above £500 throughout. You're in a good position for this.</p>}
                         </div>
-                        <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
+                        <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
                           <div className="bg-gray-800/60 rounded-xl p-3 text-center">
                             <div className="text-xs text-gray-400 mb-1">Lowest balance</div>
                             <div className={`text-xl font-bold ${purchaseSimulation.lowestWithPurchase >= 500 ? "text-emerald-400" : purchaseSimulation.lowestWithPurchase >= 0 ? "text-amber-400" : "text-red-400"}`}>{fmt(purchaseSimulation.lowestWithPurchase)}</div>
@@ -1849,7 +2119,7 @@ export default function SpendingTracker() {
               <Lightbulb size={14} className="inline mr-1.5 text-indigo-400"/> Goals track your savings targets separately from your account balance. Your current balance ({fmt(currentBalance)}) is your full pot — allocate portions to goals as you actively set money aside.
             </div>
 
-            <div className="grid gap-3" style={{gridTemplateColumns:"repeat(3,1fr)"}}>
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
               <div className="bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl p-4">
                 <div className="text-white/70 text-xs font-medium uppercase mb-1">Total Savings Target</div>
                 <div className="text-3xl font-bold text-white">{fmt(goals.reduce((s, g) => s + g.target, 0))}</div>
@@ -1864,33 +2134,56 @@ export default function SpendingTracker() {
               </div>
             </div>
 
+            <div className="flex justify-between items-center mb-1">
+              <h2 className="text-base font-semibold">Your Goals</h2>
+              <button onClick={() => { setEditingGoal({}); setShowGoalEditor(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-900/40 border border-indigo-700 text-indigo-300 text-xs font-semibold hover:border-indigo-500 transition-all">
+                + Add Goal
+              </button>
+            </div>
+
             <div className="space-y-3">
               {goals.map(goal => {
+                const GoalIcon = GOAL_ICONS[goal.iconKey] ?? Target;
                 const progress = Math.min(100, (goal.saved / goal.target) * 100);
-                const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-                const [monthStr, yearStr] = goal.date?.split(" ") ?? ["", ""];
-                const monthIdx = monthNames.indexOf(monthStr);
+                // date stored as "YYYY-MM" or legacy "Mon YYYY"
+                const MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                let monthIdx = -1, yearNum = 0;
+                if (goal.date?.includes("-")) {
+                  const [y, m] = goal.date.split("-");
+                  monthIdx = parseInt(m) - 1; yearNum = parseInt(y);
+                } else if (goal.date?.includes(" ")) {
+                  const [ms, ys] = goal.date.split(" ");
+                  monthIdx = MO.indexOf(ms); yearNum = parseInt(ys);
+                }
                 const now = new Date();
-                const rawMonthsAway = monthIdx === -1 ? 0 : (parseInt(yearStr) - now.getFullYear()) * 12 + (monthIdx - now.getMonth());
+                const rawMonthsAway = monthIdx === -1 ? 0 : (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth());
                 const isOverdue = rawMonthsAway < 0;
                 const monthsAway = Math.max(0, rawMonthsAway);
                 const stillNeeded = Math.max(0, goal.target - goal.saved);
                 const monthlyNeeded = monthsAway > 0 ? stillNeeded / monthsAway : stillNeeded;
                 const isAchievable = !isOverdue && monthlyNeeded <= Math.max(projectedNet, 0);
+                const dateLabel = goal.date ? (goal.date.includes("-") ? `${MO[monthIdx]} ${yearNum}` : goal.date) : "No date";
 
                 return (
                   <div key={goal.id} className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
-                        {(() => { const GoalIcon = goal.icon; return <GoalIcon size={32} className="text-indigo-400"/>; })()}
+                        <GoalIcon size={32} className="text-indigo-400"/>
                         <div>
                           <h3 className="font-semibold text-white text-lg">{goal.name}</h3>
-                          <p className="text-gray-500 text-xs">Target: {fmt(goal.target)} by {goal.date}</p>
+                          <p className="text-gray-500 text-xs">Target: {fmt(goal.target)} by {dateLabel}</p>
                         </div>
                       </div>
+                      <div className="flex items-start gap-2">
+                      <button onClick={() => { setEditingGoal(goal); setShowGoalEditor(true); }}
+                        className="text-gray-600 hover:text-gray-300 p-1 transition-colors" title="Edit goal">
+                        <Star size={14}/>
+                      </button>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-indigo-400">{fmt(goal.saved)}</div>
                         <div className="text-xs text-gray-500">saved · {Math.round(progress)}% done</div>
+                      </div>
                       </div>
                     </div>
 
@@ -1900,7 +2193,7 @@ export default function SpendingTracker() {
                       </div>
                     </div>
 
-                    <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr 1fr"}}>
+                    <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
                       <div className="bg-gray-800 rounded-lg p-3">
                         <div className="text-xs text-gray-500 mb-1">Months to Go</div>
                         <div className={`text-lg font-bold ${isOverdue ? "text-red-400" : "text-white"}`}>
@@ -1962,7 +2255,7 @@ export default function SpendingTracker() {
                 <div className="flex-1">
                   <div className="text-2xl font-black text-white mb-1">{spendingDNA.archetype}</div>
                   <p className="text-purple-300/80 text-sm mb-4">{spendingDNA.trait}</p>
-                  <div className="grid gap-2" style={{gridTemplateColumns:"1fr 1fr"}}>
+                  <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
                     <div className="bg-black/20 rounded-xl p-3">
                       <div className="flex items-center gap-1.5 mb-1"><Star size={11} className="text-emerald-400"/><span className="text-xs text-gray-400">Best month</span></div>
                       <div className="text-sm font-semibold text-emerald-400">{spendingDNA.bestMonth}</div>
@@ -1984,7 +2277,7 @@ export default function SpendingTracker() {
             <div className="bg-gray-900 rounded-2xl p-5">
               <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><Timer size={15} className="text-gray-400"/> Months of Runway</h2>
               <p className="text-gray-500 text-xs mb-4">How long could you survive on current savings if each income scenario played out?</p>
-              <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1fr 1fr 1fr"}}>
+              <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
                 <div className="bg-gray-800 rounded-xl p-4 text-center">
                   <div className="text-5xl font-black text-indigo-400 mb-2">{runway.toFixed(1)}</div>
                   <div className="text-xs font-semibold text-white mb-1">No Income</div>
@@ -2085,7 +2378,7 @@ export default function SpendingTracker() {
             {/* Income Reliability Score */}
             <div className="bg-gray-900 rounded-2xl p-5">
               <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><BarChart3 size={15} className="text-gray-400"/> Income Reliability Score</h2>
-              <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1.5fr"}}>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                 <div className="flex flex-col justify-center">
                   <div className="text-5xl font-bold text-indigo-400 mb-2">{reliabilityScore}/10</div>
                   <p className="text-xs text-gray-400">Based on income variability and emergency buffer strength</p>
@@ -2137,15 +2430,15 @@ export default function SpendingTracker() {
       {/* ═══════════════ CSV IMPORT MODAL ═══════════════ */}
       {showImport && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-          onClick={e => e.target === e.currentTarget && (setShowImport(false), setImportPreview(null))}>
-          <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-lg shadow-2xl">
+          onClick={e => e.target === e.currentTarget && (setShowImport(false), setImportPreview(null), setCsvError(null))}>
+          <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
 
             <div className="flex justify-between items-start mb-5">
               <div>
                 <h2 className="text-lg font-bold text-white">Import Bank CSV</h2>
                 <p className="text-gray-400 text-xs mt-0.5">Your data stays in the browser — nothing is uploaded</p>
               </div>
-              <button onClick={() => { setShowImport(false); setImportPreview(null); }}
+              <button onClick={() => { setShowImport(false); setImportPreview(null); setCsvError(null); }}
                 className="text-gray-500 hover:text-white"><X size={20}/></button>
             </div>
 
@@ -2156,33 +2449,75 @@ export default function SpendingTracker() {
                   onDragLeave={() => setDragOver(false)}
                   onDrop={e => { e.preventDefault(); setDragOver(false); handleCSVFile(e.dataTransfer.files[0]); }}
                   onClick={() => csvInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
+                  className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
                     dragOver ? "border-indigo-500 bg-indigo-900/20" : "border-gray-700 hover:border-gray-500 hover:bg-gray-800/40"
                   }`}>
-                  <Folder size={36} className="text-gray-400 mb-3"/>
+                  <Folder size={36} className="text-gray-400 mb-3 mx-auto"/>
                   <p className="text-white font-semibold mb-1">Drop your bank CSV here</p>
                   <p className="text-gray-500 text-sm">or click to browse</p>
-                  <p className="text-gray-600 text-xs mt-3">Internet Banking → Statements → Export as CSV</p>
                   <input ref={csvInputRef} type="file" accept=".csv" className="hidden"
                     onChange={e => handleCSVFile(e.target.files[0])}/>
                 </div>
 
-                <div className="mt-4 bg-gray-800/50 rounded-xl p-3 space-y-1 text-xs text-gray-400">
-                  <p>Expected columns: <span className="text-gray-300">Transaction Date · Transaction Description · Debit Amount · Credit Amount · Balance</span></p>
-                  <p>Transactions are auto-categorised by keyword. Works best with UK bank CSV exports.</p>
+                {csvError && (
+                  <div className="mt-3 bg-red-900/30 border border-red-700 rounded-xl p-3 flex gap-2 items-start">
+                    <AlertTriangle size={14} className="text-red-400 flex-shrink-0 mt-0.5"/>
+                    <p className="text-red-300 text-sm whitespace-pre-line">{csvError}</p>
+                  </div>
+                )}
+
+                <div className="mt-4 bg-gray-800/50 rounded-xl p-4 space-y-3 text-xs text-gray-400">
+                  <div>
+                    <p className="text-gray-300 font-semibold mb-1.5">Supported banks</p>
+                    <div className="grid gap-1" style={{gridTemplateColumns:"1fr 1fr"}}>
+                      {["Lloyds Bank","Monzo","Starling Bank","HSBC","NatWest"].map(b => (
+                        <span key={b} className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400"/>{b}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-gray-300 font-semibold mb-1">How to export (Lloyds)</p>
+                    <ol className="space-y-0.5 list-decimal list-inside text-gray-500">
+                      <li>Log in → select your account</li>
+                      <li>Statements &amp; transactions → Export</li>
+                      <li>Choose date range → Download CSV</li>
+                    </ol>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const sample = `Transaction Date,Transaction Description,Debit Amount,Credit Amount,Balance\n01/01/2026,Monthly Rent,1000.00,,2500.00\n02/01/2026,Employer Salary,,2200.00,3700.00\n05/01/2026,Supermarket,85.00,,3615.00\n10/01/2026,Coffee Shop,4.50,,3610.50\n15/01/2026,Phone Contract,35.00,,3575.50\n20/01/2026,Streaming Service,12.99,,3562.51`;
+                      const blob = new Blob([sample], { type: "text/csv" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url; a.download = "sample-bank-export.csv"; a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
+                    <Download size={12}/> Download sample CSV
+                  </button>
                 </div>
 
                 {importedData && (
                   <button
                     onClick={() => {
                       if (!window.confirm("Revert to demo data? This will remove all imported data and overrides.")) return;
-                      setImportedData(null); setImportPreview(null); setShowImport(false); setSelMonth("Jan '26");
+                      setImportedData(null); setImportPreview(null); setShowImport(false); setSelMonth(DEFAULT_MONTHLY_SUMMARY[DEFAULT_MONTHLY_SUMMARY.length - 1].label);
                       localStorage.removeItem("spendingData"); localStorage.removeItem("catOverrides"); setTxCatOverrides({});
                     }}
                     className="mt-3 w-full py-2 rounded-xl text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-red-700 hover:bg-red-900/20 transition-all">
                     ↩ Revert to demo data
                   </button>
                 )}
+
+                <div className="mt-3 border-t border-gray-800 pt-3">
+                  <p className="text-xs text-gray-500 mb-2">Restore a previous backup</p>
+                  <button onClick={() => jsonInputRef.current?.click()}
+                    className="flex items-center gap-2 text-gray-400 hover:text-white text-xs transition-colors">
+                    <Folder size={12}/> Restore from .json backup
+                  </button>
+                  <input ref={jsonInputRef} type="file" accept=".json" className="hidden"
+                    onChange={e => handleImportJSON(e.target.files[0])}/>
+                </div>
               </>
             ) : (
               <div className="space-y-4">
@@ -2270,6 +2605,19 @@ export default function SpendingTracker() {
           transactions={ALL_TRANSACTIONS}
           onClose={() => setOtherDrillMonth(null)}
           onReassign={handleReassign}
+        />
+      )}
+
+      {/* ═══════════════ GOAL EDITOR MODAL ═══════════════ */}
+      {showGoalEditor && (
+        <GoalEditorModal
+          goal={editingGoal}
+          onSave={g => setGoals(prev => g.id && prev.find(x => x.id === g.id)
+            ? prev.map(x => x.id === g.id ? g : x)
+            : [...prev, g]
+          )}
+          onDelete={id => setGoals(prev => prev.filter(g => g.id !== id))}
+          onClose={() => { setShowGoalEditor(false); setEditingGoal(null); }}
         />
       )}
 

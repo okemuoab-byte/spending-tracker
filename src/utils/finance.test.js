@@ -67,16 +67,20 @@ describe('autocat', () => {
 });
 
 describe('autocatInc', () => {
-  it('classifies NHS Bursary', () => {
-    expect(autocatInc('NHSBSA BURSARY')).toBe('NHS Bursary');
+  it('classifies salary / payroll', () => {
+    expect(autocatInc('EMPLOYER SALARY')).toBe('Salary');
+    expect(autocatInc('PAYROLL PAYMENT')).toBe('Salary');
   });
-  it('classifies UCL stipend', () => {
-    expect(autocatInc('UCL STIPEND')).toBe('UCL Stipend');
+  it('classifies freelance income', () => {
+    expect(autocatInc('FREELANCE INVOICE')).toBe('Freelance');
   });
-  it('classifies Student Loan', () => {
-    expect(autocatInc('SLC STUDENT LOAN')).toBe('Student Loan');
+  it('classifies bonus', () => {
+    expect(autocatInc('ANNUAL BONUS')).toBe('Bonus');
   });
-  it('falls back to Family Support for unrecognised income', () => {
-    expect(autocatInc('TRANSFER FROM MUM')).toBe('Family Support');
+  it('classifies side income', () => {
+    expect(autocatInc('SIDE INCOME PAYMENT')).toBe('Side Income');
+  });
+  it('falls back to Other Income for unrecognised income', () => {
+    expect(autocatInc('RANDOM TRANSFER XYZ')).toBe('Other Income');
   });
 });
