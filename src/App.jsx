@@ -449,7 +449,7 @@ function GoalInput({ goal, setGoals }) {
 
 // ── MAIN ─────────────────────────────────────────────────────────────────────
 export default function SpendingTracker() {
-  const [tab, setTab]             = useState("overview");
+  const [tab, setTab]             = useState("dashboard");
   const [themeId, setThemeId]     = useState(() => localStorage.getItem("theme") ?? "indigo");
   const [selMonth, setSelMonth]   = useState("Jan '26");
   const [search, setSearch]       = useState("");
@@ -460,11 +460,14 @@ export default function SpendingTracker() {
   const [monthlyIncome, setMonthlyIncome]   = useState(2200);
   const [injuryActive, setInjuryActive]     = useState(false);
   const [horizonMonths, setHorizonMonths]   = useState(6);
-  const [goals, setGoals] = useState([
-    { id:1, name:"Emergency Fund", icon:Shield, target:3000, date:"Jun 2026", saved:0 },
-    { id:2, name:"Summer Holiday", icon:Plane,  target:800,  date:"Jul 2026", saved:0 },
-    { id:3, name:"New Laptop",     icon:Laptop, target:1200, date:"Sep 2026", saved:0 },
-  ]);
+  const [goals, setGoals] = useState(() => {
+    const saved = (() => { try { return JSON.parse(localStorage.getItem("goalSaved") ?? "{}"); } catch { return {}; } })();
+    return [
+      { id:1, name:"Emergency Fund", icon:Shield, target:3000, date:"Jun 2026", saved: saved[1] ?? 0 },
+      { id:2, name:"Summer Holiday", icon:Plane,  target:800,  date:"Jul 2026", saved: saved[2] ?? 0 },
+      { id:3, name:"New Laptop",     icon:Laptop, target:1200, date:"Sep 2026", saved: saved[3] ?? 0 },
+    ];
+  });
   // subToggles: true = marked for cancellation, false = keep
   const [subToggles, setSubToggles]         = useState({});
   const [affordabilityItem, setAffordabilityItem]   = useState("");
@@ -481,6 +484,7 @@ export default function SpendingTracker() {
     try { return JSON.parse(localStorage.getItem("catOverrides") ?? "{}"); } catch { return {}; }
   });
   const [bannerDismissed, setBannerDismissed] = useState(() => !!localStorage.getItem("bannerDismissed"));
+  const [importSuccess, setImportSuccess]     = useState(false);
   const csvInputRef                         = useRef(null);
   const overviewRef                         = useRef(null);
 
@@ -517,6 +521,12 @@ export default function SpendingTracker() {
       catch { localStorage.removeItem("spendingData"); }
     }
   }, []);
+
+  // ── PERSIST GOAL SAVED AMOUNTS ──────────────────────────────────────────────
+  useEffect(() => {
+    const amounts = Object.fromEntries(goals.map(g => [g.id, g.saved]));
+    localStorage.setItem("goalSaved", JSON.stringify(amounts));
+  }, [goals]);
 
   // ── SYNC selMonth WHEN DATA CHANGES ────────────────────────────────────────
   useEffect(() => {
@@ -810,13 +820,10 @@ export default function SpendingTracker() {
   };
 
   const TABS = [
-    { id:"overview",     label:"Overview",      Icon: BarChart3  },
-    { id:"monthly",      label:"Monthly",       Icon: Calendar   },
-    { id:"forecast",     label:"Forecast",      Icon: TrendingUp },
-    { id:"income",       label:"Income",        Icon: DollarSign },
-    { id:"goals",        label:"Goals",         Icon: Target     },
-    { id:"insights",     label:"Insights",      Icon: Lightbulb  },
-    { id:"transactions", label:"Transactions",  Icon: CreditCard },
+    { id:"dashboard",  label:"Dashboard",      Icon: BarChart3  },
+    { id:"plan",       label:"Plan",           Icon: TrendingUp },
+    { id:"breakdown",  label:"Breakdown",      Icon: Calendar   },
+    { id:"health",     label:"Goals & Health", Icon: Target     },
   ];
 
   // Verdict colours helper
@@ -862,7 +869,7 @@ export default function SpendingTracker() {
               }`}>
               {importedData ? <><Check size={13}/> Your Data</> : <><Folder size={13}/> Import CSV</>}
             </button>
-            {tab === "overview" && (
+            {tab === "dashboard" && (
               <button onClick={handleExportPNG}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white transition-all">
                 <Download size={13}/> Export PNG
@@ -904,9 +911,9 @@ export default function SpendingTracker() {
         {/* ═══════════════ TABS ═══════════════ */}
         <AnimatePresence mode="wait">
 
-        {/* ═══════════════ OVERVIEW ═══════════════ */}
-        {tab === "overview" && (
-          <motion.div key="overview" ref={overviewRef}
+        {/* ═══════════════ DASHBOARD ═══════════════ */}
+        {tab === "dashboard" && (
+          <motion.div key="dashboard" ref={overviewRef}
             initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
             transition={{duration:0.18}} className="space-y-5">
 
@@ -979,13 +986,13 @@ export default function SpendingTracker() {
             </div>
 
             {/* ── SIMULATOR CTA (signpost to hidden feature) ── */}
-            <button onClick={() => setTab("insights")}
+            <button onClick={() => setTab("plan")}
               className="w-full bg-gradient-to-r from-indigo-900/60 to-purple-900/60 border border-indigo-700/50 rounded-2xl p-4 flex items-center justify-between hover:border-indigo-500 transition-all group">
               <div className="flex items-center gap-3">
                 <div className="bg-indigo-600/30 rounded-xl p-2.5"><CreditCard size={18} className="text-indigo-400"/></div>
                 <div className="text-left">
                   <div className="font-semibold text-white text-sm flex items-center gap-1.5"><CreditCard size={13}/> Can I afford to buy something?</div>
-                  <div className="text-gray-400 text-xs mt-0.5">Run a full month-by-month impact simulation before you spend</div>
+                  <div className="text-gray-400 text-xs mt-0.5">Run a full month-by-month impact simulation — in the Plan tab</div>
                 </div>
               </div>
               <ChevronRight size={18} className="text-indigo-400 group-hover:translate-x-1 transition-transform"/>
@@ -1131,12 +1138,32 @@ export default function SpendingTracker() {
                 })}
               </div>
             </div>
+            {/* Income by Month — dynamic source names work with any CSV */}
+            <div className="bg-gray-900 rounded-2xl p-5">
+              <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><DollarSign size={15} className="text-gray-400"/> Income Sources by Month</h2>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={MONTHLY_SUMMARY.map(m => ({ month:m.label, ...INCOME_BREAKDOWN[m.label] }))} barCategoryGap="20%">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
+                  <XAxis dataKey="month" tick={{fill:"#9ca3af",fontSize:11}}/>
+                  <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
+                  <Tooltip content={<Tip/>}/>
+                  <Legend wrapperStyle={{color:"#9ca3af",fontSize:"11px"}}/>
+                  {(() => {
+                    const srcs = [...new Set(Object.values(INCOME_BREAKDOWN).flatMap(mo => Object.keys(mo)))];
+                    return srcs.map((src, i) => (
+                      <Bar key={src} dataKey={src} stackId="a" fill={INC_COLORS[i % INC_COLORS.length]}
+                        radius={i === srcs.length - 1 ? [4,4,0,0] : [0,0,0,0]}/>
+                    ));
+                  })()}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </motion.div>
         )}
 
-        {/* ═══════════════ MONTHLY DETAIL ═══════════════ */}
-        {tab === "monthly" && (
-          <motion.div key="monthly"
+        {/* ═══════════════ BREAKDOWN ═══════════════ */}
+        {tab === "breakdown" && (
+          <motion.div key="breakdown"
             initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
             transition={{duration:0.18}} className="space-y-5">
             <div className="flex gap-2 flex-wrap items-center justify-between">
@@ -1318,14 +1345,72 @@ export default function SpendingTracker() {
                 </>
               );
             })()}
+
+            {/* ── TRANSACTIONS ── */}
+            <div className="border-t border-gray-800 pt-5">
+              <h2 className="text-base font-semibold mb-3 flex items-center gap-2"><CreditCard size={15} className="text-gray-400"/> Transactions</h2>
+              <div className="bg-gray-900 rounded-2xl p-4 flex flex-wrap gap-3 items-center mb-3">
+                <input type="text" placeholder="Search transactions…" value={search} onChange={e => setSearch(e.target.value)}
+                  className="flex-1 min-w-48 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"/>
+                <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
+                  className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
+                  {allCats.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <select value={filterDir} onChange={e => setFilterDir(e.target.value)}
+                  className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
+                  <option value="All">All</option>
+                  <option value="in">Income</option>
+                  <option value="out">Spending</option>
+                </select>
+                <span className="text-gray-500 text-sm">{filteredTxs.length} entries</span>
+              </div>
+              <div className="bg-gray-900 rounded-2xl overflow-hidden">
+                <div className="grid text-xs font-semibold text-gray-500 uppercase px-5 py-3 border-b border-gray-800"
+                  style={{gridTemplateColumns:"90px 70px 1fr 160px 80px 100px"}}>
+                  <span>Date</span><span>Month</span><span>Description</span><span>Category</span><span>Type</span><span className="text-right">Amount</span>
+                </div>
+                <div className="max-h-96 overflow-y-auto divide-y divide-gray-800/40">
+                  {filteredTxs.map((tx, i) => (
+                    <div key={`${tx.date}:${tx.desc}:${tx.amount}:${i}`} className="grid items-center px-5 py-2.5 hover:bg-gray-800/50 text-sm"
+                      style={{gridTemplateColumns:"90px 70px 1fr 160px 80px 100px"}}>
+                      <span className="text-gray-500 text-xs">{tx.date.slice(5)}</span>
+                      <span className="text-gray-600 text-xs">{tx.month}</span>
+                      <span className="text-gray-200 truncate pr-2">{tx.desc}</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: CAT_COLORS[tx.cat] || "#6366f1"}}/>
+                        <span className="text-gray-400 text-xs truncate">{tx.cat}</span>
+                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${tx.dir==="in" ? "bg-green-900/40 text-green-400" : "bg-red-900/30 text-red-400"}`}>
+                        {tx.dir === "in" ? "↑ In" : "↓ Out"}
+                      </span>
+                      <span className={`text-right font-semibold ${tx.dir==="in" ? "text-green-400" : "text-white"}`}>
+                        {tx.dir === "in" ? "+" : "-"}{fmt(tx.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
 
-        {/* ═══════════════ FORECAST ═══════════════ */}
-        {tab === "forecast" && (
-          <motion.div key="forecast"
+        {/* ═══════════════ PLAN ═══════════════ */}
+        {tab === "plan" && (
+          <motion.div key="plan"
             initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
             transition={{duration:0.18}} className="space-y-5">
+            {importSuccess && (
+              <div className="bg-emerald-900/30 border border-emerald-700 rounded-xl p-4 flex items-start justify-between gap-3">
+                <div className="flex gap-3">
+                  <Check size={18} className="text-emerald-400 flex-shrink-0 mt-0.5"/>
+                  <div>
+                    <div className="font-semibold text-emerald-300 text-sm">Data loaded — {MONTHLY_SUMMARY.length} months imported</div>
+                    <div className="text-emerald-400/70 text-xs mt-0.5">Set your expected monthly income below, then scroll down to run the Purchase Impact Simulator.</div>
+                  </div>
+                </div>
+                <button onClick={() => setImportSuccess(false)} className="text-emerald-600 hover:text-emerald-300 flex-shrink-0"><X size={16}/></button>
+              </div>
+            )}
             {monthBreach && (
               <div className="bg-red-900/40 border border-red-700 rounded-xl p-4 flex gap-3">
                 <AlertTriangle size={20} className="text-red-400 flex-shrink-0 mt-0.5"/>
@@ -1528,85 +1613,114 @@ export default function SpendingTracker() {
                 ))}
               </div>
             </div>
-          </motion.div>
-        )}
 
-        {/* ═══════════════ INCOME TAB ═══════════════ */}
-        {tab === "income" && (
-          <motion.div key="income"
-            initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
-            transition={{duration:0.18}} className="space-y-5">
-            <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
-              <h2 className="text-base font-semibold mb-4">Income Sources by Month</h2>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={MONTHLY_SUMMARY.map(m => ({ month:m.label, ...INCOME_BREAKDOWN[m.label] }))} barCategoryGap="20%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
-                  <XAxis dataKey="month" tick={{fill:"#9ca3af",fontSize:11}}/>
-                  <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
-                  <Tooltip content={<Tip/>}/>
-                  <Legend wrapperStyle={{color:"#9ca3af",fontSize:"11px"}}/>
-                  {["UCL Stipend","NHS Bursary","Family Support","Student Loan","Other"].map((src, i) => (
-                    <Bar key={src} dataKey={src} stackId="a" fill={INC_COLORS[i]} radius={i === 4 ? [4,4,0,0] : [0,0,0,0]}/>
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
-            </motion.div>
-
-            <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1fr"}}>
-              <div className="bg-gray-900 rounded-2xl p-5">
-                <h2 className="text-sm font-semibold mb-4">{MONTHLY_SUMMARY.length}-Month Income Breakdown</h2>
-                {(() => {
-                  const totals = {};
-                  Object.values(INCOME_BREAKDOWN).forEach(mo =>
-                    Object.entries(mo).forEach(([k, v]) => { totals[k] = (totals[k] || 0) + v; })
-                  );
-                  const grand = Object.values(totals).reduce((a, b) => a + b, 0);
-                  return Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([src, amt], i) => (
-                    <div key={src} className="mb-3">
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-300 flex items-center gap-1.5">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:INC_COLORS[i%INC_COLORS.length]}}/>
-                          {src}
-                        </span>
-                        <span className="text-white font-semibold">{fmt(amt)} <span className="text-gray-500">({((amt/grand)*100).toFixed(1)}%)</span></span>
-                      </div>
-                      <div className="h-1.5 bg-gray-800 rounded-full">
-                        <div className="h-1.5 rounded-full" style={{width:`${(amt/grand)*100}%`, backgroundColor:INC_COLORS[i%INC_COLORS.length]}}/>
-                      </div>
-                    </div>
-                  ));
-                })()}
+            {/* ═══ CAN I AFFORD IT? — PURCHASE IMPACT SIMULATOR ═══ */}
+            <div className="bg-gray-900 rounded-2xl p-5 border border-indigo-800/40">
+              <div className="mb-5">
+                <h2 className="text-base font-semibold flex items-center gap-2"><CreditCard size={15} className="text-gray-400"/> Can I Afford It? — Purchase Impact Simulator</h2>
+                <p className="text-gray-500 text-xs mt-1">See exactly what happens to your balance month-by-month if you make this purchase. Not just a yes/no — a full trajectory.</p>
               </div>
-
-              <div className="bg-gray-900 rounded-2xl p-5">
-                <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><Lightbulb size={14} className="text-gray-400"/> Income Patterns</h2>
-                <div className="space-y-3 text-sm">
-                  {[
-                    { src:"UCL Stipend",    icon:GraduationCap, note:"Irregular — varies significantly month to month. Tied to term dates and grant disbursements. Don't treat the high months as the norm.", color:"text-green-400" },
-                    { src:"NHS Bursary",    icon:Stethoscope,   note:"Appears bi-monthly rather than every month. Plan cash flow carefully in the months it doesn't arrive.", color:"text-sky-400" },
-                    { src:"Family Support", icon:Users,         note:"The most consistent income source — arrives every month within a predictable range. A reliable baseline to budget against.", color:"text-blue-400" },
-                    { src:"Student Loan",   icon:Landmark,      note:"SLC disbursements in Jun, Jul, Sep, Jan — typically at term start. Don't treat as regular income.", color:"text-purple-400" },
-                  ].map(i => {
-                    const PIIcon = i.icon;
-                    return (
-                    <div key={i.src} className="flex gap-3 bg-gray-800 rounded-xl p-3">
-                      <PIIcon size={18} className={`flex-shrink-0 mt-0.5 ${i.color}`}/>
-                      <div>
-                        <div className={`font-semibold text-xs ${i.color}`}>{i.src}</div>
-                        <div className="text-gray-400 text-xs mt-0.5 leading-relaxed">{i.note}</div>
-                      </div>
-                    </div>
-                  );
-                  })}
+              <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1fr 1fr 140px"}}>
+                <div>
+                  <label className="text-xs text-gray-400 mb-2 block">What do you want to buy?</label>
+                  <input type="text" placeholder="New phone, holiday, trainers..." value={affordabilityItem}
+                    onChange={e => setAffordabilityItem(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500"/>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-2 block">Cost (£)</label>
+                  <input type="number" placeholder="e.g. 500" value={affordabilityAmount}
+                    onChange={e => setAffordabilityAmount(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500"/>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-2 block">When? (month to simulate)</label>
+                  <input type="month" min={`${fcStartYear}-${String(fcStartIdx + 1).padStart(2,"0")}`} max={`${fcStartYear + 1}-12`} value={affordabilityDate}
+                    onChange={e => setAffordabilityDate(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-2 block">Spread over</label>
+                  <select value={spreadMonths} onChange={e => setSpreadMonths(Number(e.target.value))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    {[1,2,3,4,6,12].map(n => <option key={n} value={n}>{n} month{n>1?"s":""}</option>)}
+                  </select>
                 </div>
               </div>
+
+              {!purchaseSimulation && affordabilityAmount && affordabilityDate && (
+                <div className="mt-4 bg-amber-900/20 border border-amber-700 rounded-xl p-3 text-amber-300 text-sm">
+                  Please select a month within the forecast window ({forecastData[0]?.month ?? "—"} – {forecastData[forecastData.length - 1]?.month ?? "—"}).
+                </div>
+              )}
+
+              {purchaseSimulation && (() => {
+                const vs = verdictStyle(purchaseSimulation.verdict);
+                return (
+                  <div className="mt-5 space-y-4">
+                    <div className={`rounded-2xl p-5 border ${vs.border} ${vs.bg}`}>
+                      <div className="flex justify-between items-start flex-wrap gap-4">
+                        <div>
+                          <div className={`text-4xl font-black mb-1 ${vs.text}`}>{vs.label}</div>
+                          <p className="text-gray-300 text-sm">
+                            {affordabilityItem && <span className="font-semibold text-white">{affordabilityItem} — </span>}
+                            {fmt(purchaseSimulation.amt)} in {purchaseSimulation.purchaseMonthLabel}
+                          </p>
+                          {purchaseSimulation.verdict === "SHORTFALL" && <p className="text-red-400 text-xs mt-2">Your balance would go negative. Cut costs or wait for a higher-income month.</p>}
+                          {purchaseSimulation.verdict === "TIGHT" && <p className="text-amber-400 text-xs mt-2">You can cover it, but your safety buffer drops below £500. Consider spreading the cost.</p>}
+                          {purchaseSimulation.verdict === "COMFORTABLE" && <p className="text-emerald-400 text-xs mt-2">Your balance stays above £500 throughout. You're in a good position for this.</p>}
+                        </div>
+                        <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
+                          <div className="bg-gray-800/60 rounded-xl p-3 text-center">
+                            <div className="text-xs text-gray-400 mb-1">Lowest balance</div>
+                            <div className={`text-xl font-bold ${purchaseSimulation.lowestWithPurchase >= 500 ? "text-emerald-400" : purchaseSimulation.lowestWithPurchase >= 0 ? "text-amber-400" : "text-red-400"}`}>{fmt(purchaseSimulation.lowestWithPurchase)}</div>
+                          </div>
+                          <div className="bg-gray-800/60 rounded-xl p-3 text-center">
+                            <div className="text-xs text-gray-400 mb-1">If spread {spreadMonths}mo</div>
+                            <div className="text-xl font-bold text-indigo-400">{fmt(parseFloat(purchaseSimulation.spreadMonthlyExtra))}/mo</div>
+                          </div>
+                          <div className="bg-gray-800/60 rounded-xl p-3 text-center">
+                            <div className="text-xs text-gray-400 mb-1">Your surplus/mo</div>
+                            <div className={`text-xl font-bold ${purchaseSimulation.monthlyNet >= 0 ? "text-emerald-400" : "text-red-400"}`}>{purchaseSimulation.monthlyNet >= 0 ? "+" : ""}{fmt(purchaseSimulation.monthlyNet)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <motion.div className="bg-gray-800/40 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
+                      <h3 className="text-sm font-semibold mb-1 text-white">Balance Trajectory: With vs. Without Purchase</h3>
+                      <p className="text-xs text-gray-500 mb-4">Dashed grey = without purchase · Coloured = with purchase · Circle = purchase moment.</p>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <ComposedChart data={purchaseSimulation.simMonths}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
+                          <XAxis dataKey="month" tick={{fill:"#9ca3af",fontSize:10}}/>
+                          <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
+                          <Tooltip content={<Tip/>}/>
+                          <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="4 4" label={{value:"£0",fill:"#ef4444",fontSize:9}}/>
+                          <ReferenceLine y={500} stroke="#f59e0b" strokeDasharray="3 3" label={{value:"£500 buffer",fill:"#f59e0b",fontSize:9}}/>
+                          <Line type="monotone" dataKey="Without Purchase" stroke="#6b7280" strokeDasharray="6 3" strokeWidth={2} dot={false}/>
+                          <Line type="monotone" dataKey="With Purchase"
+                            stroke={purchaseSimulation.verdict === "COMFORTABLE" ? "#22c55e" : purchaseSimulation.verdict === "TIGHT" ? "#f59e0b" : "#ef4444"}
+                            strokeWidth={2.5}
+                            dot={(props) => {
+                              const point = purchaseSimulation.simMonths[props.index];
+                              if (!point?.isPurchase) return <circle key={props.index} cx={props.cx} cy={props.cy} r={3} fill="#6b7280"/>;
+                              return <circle key={props.index} cx={props.cx} cy={props.cy} r={7} fill="#ef4444" stroke="#fff" strokeWidth={2}/>;
+                            }}/>
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                      {purchaseSimulation.recoversAt && <p className="text-xs text-gray-400 mt-3"><Lightbulb size={12} className="inline mr-1"/> Balance returns above £500 buffer by <span className="text-emerald-400 font-semibold">{purchaseSimulation.recoversAt}</span>.</p>}
+                      {!purchaseSimulation.recoversAt && purchaseSimulation.verdict !== "COMFORTABLE" && <p className="text-xs text-amber-400 mt-3"><AlertTriangle size={12} className="inline mr-1"/> Balance stays below £500 within this window. Consider a higher-income month or spreading the cost.</p>}
+                    </motion.div>
+                  </div>
+                );
+              })()}
             </div>
           </motion.div>
         )}
 
-        {/* ═══════════════ GOALS TAB ═══════════════ */}
-        {tab === "goals" && (
-          <motion.div key="goals"
+        {/* ═══════════════ GOALS & HEALTH ═══════════════ */}
+        {tab === "health" && (
+          <motion.div key="health"
             initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
             transition={{duration:0.18}} className="space-y-5">
             <div className="bg-indigo-900/20 border border-indigo-800/40 rounded-xl p-4 text-sm text-indigo-300">
@@ -1692,15 +1806,13 @@ export default function SpendingTracker() {
                 );
               })}
             </div>
-          </motion.div>
-        )}
 
-        {/* ═══════════════ INSIGHTS TAB ═══════════════ */}
-        {tab === "insights" && (
-          <motion.div key="insights"
-            initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
-            transition={{duration:0.18}} className="space-y-5">
+            {/* ─── FINANCIAL HEALTH ─── */}
+            <div className="border-t border-gray-800 pt-5">
+              <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><Lightbulb size={15} className="text-indigo-400"/> Financial Health</h2>
+            </div>
 
+            {/* Spending DNA */}
             <div className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 rounded-2xl p-5 border border-purple-700/40">
               <div className="flex items-center gap-2 mb-1">
                 <Flame size={16} className="text-orange-400"/>
@@ -1728,156 +1840,23 @@ export default function SpendingTracker() {
               </div>
             </div>
 
-            {/* ═══ CAN I AFFORD IT? — PURCHASE IMPACT SIMULATOR ═══ */}
-            <div className="bg-gray-900 rounded-2xl p-5 border border-indigo-800/40">
-              <div className="mb-5">
-                <h2 className="text-base font-semibold flex items-center gap-2"><CreditCard size={15} className="text-gray-400"/> Can I Afford It? — Purchase Impact Simulator</h2>
-                <p className="text-gray-500 text-xs mt-1">See exactly what happens to your balance month-by-month if you make this purchase. Not just a yes/no — a full trajectory.</p>
-              </div>
-
-              <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1fr 1fr 140px"}}>
-                <div>
-                  <label className="text-xs text-gray-400 mb-2 block">What do you want to buy?</label>
-                  <input type="text" placeholder="New phone, holiday, trainers..." value={affordabilityItem}
-                    onChange={e => setAffordabilityItem(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500"/>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 mb-2 block">Cost (£)</label>
-                  <input type="number" placeholder="e.g. 500" value={affordabilityAmount}
-                    onChange={e => setAffordabilityAmount(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500"/>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 mb-2 block">When? (month to simulate)</label>
-                  <input type="month" min={`${fcStartYear}-${String(fcStartIdx + 1).padStart(2,"0")}`} max={`${fcStartYear + 1}-12`} value={affordabilityDate}
-                    onChange={e => setAffordabilityDate(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 mb-2 block">Spread over</label>
-                  <select value={spreadMonths} onChange={e => setSpreadMonths(Number(e.target.value))}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                    {[1,2,3,4,6,12].map(n => <option key={n} value={n}>{n} month{n>1?"s":""}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {!purchaseSimulation && affordabilityAmount && affordabilityDate && (
-                <div className="mt-4 bg-amber-900/20 border border-amber-700 rounded-xl p-3 text-amber-300 text-sm">
-                  Please select a month within the forecast window ({forecastData[0]?.month ?? "—"} – {forecastData[forecastData.length - 1]?.month ?? "—"}).
-                </div>
-              )}
-
-              {purchaseSimulation && (() => {
-                const vs = verdictStyle(purchaseSimulation.verdict);
-                return (
-                  <div className="mt-5 space-y-4">
-                    <div className={`rounded-2xl p-5 border ${vs.border} ${vs.bg}`}>
-                      <div className="flex justify-between items-start flex-wrap gap-4">
-                        <div>
-                          <div className={`text-4xl font-black mb-1 ${vs.text}`}>{vs.label}</div>
-                          <p className="text-gray-300 text-sm">
-                            {affordabilityItem && <span className="font-semibold text-white">{affordabilityItem} — </span>}
-                            {fmt(purchaseSimulation.amt)} in {purchaseSimulation.purchaseMonthLabel}
-                          </p>
-                          {purchaseSimulation.verdict === "SHORTFALL" && (
-                            <p className="text-red-400 text-xs mt-2">Your balance would go negative. Cut costs or wait for a higher-income month.</p>
-                          )}
-                          {purchaseSimulation.verdict === "TIGHT" && (
-                            <p className="text-amber-400 text-xs mt-2">You can cover it, but your safety buffer drops below £500. Consider spreading the cost.</p>
-                          )}
-                          {purchaseSimulation.verdict === "COMFORTABLE" && (
-                            <p className="text-emerald-400 text-xs mt-2">Your balance stays above £500 throughout. You're in a good position for this.</p>
-                          )}
-                        </div>
-                        <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
-                          <div className="bg-gray-800/60 rounded-xl p-3 text-center">
-                            <div className="text-xs text-gray-400 mb-1">Lowest balance</div>
-                            <div className={`text-xl font-bold ${purchaseSimulation.lowestWithPurchase >= 500 ? "text-emerald-400" : purchaseSimulation.lowestWithPurchase >= 0 ? "text-amber-400" : "text-red-400"}`}>
-                              {fmt(purchaseSimulation.lowestWithPurchase)}
-                            </div>
-                          </div>
-                          <div className="bg-gray-800/60 rounded-xl p-3 text-center">
-                            <div className="text-xs text-gray-400 mb-1">If spread {spreadMonths}mo</div>
-                            <div className="text-xl font-bold text-indigo-400">{fmt(parseFloat(purchaseSimulation.spreadMonthlyExtra))}/mo</div>
-                          </div>
-                          <div className="bg-gray-800/60 rounded-xl p-3 text-center">
-                            <div className="text-xs text-gray-400 mb-1">Your surplus/mo</div>
-                            <div className={`text-xl font-bold ${purchaseSimulation.monthlyNet >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                              {purchaseSimulation.monthlyNet >= 0 ? "+" : ""}{fmt(purchaseSimulation.monthlyNet)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <motion.div className="bg-gray-800/40 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
-                      <h3 className="text-sm font-semibold mb-1 text-white">Balance Trajectory: With vs. Without Purchase</h3>
-                      <p className="text-xs text-gray-500 mb-4">Dashed grey = your balance if you don't buy it. Coloured line = your balance if you do. The circle marks the moment of purchase.</p>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <ComposedChart data={purchaseSimulation.simMonths}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
-                          <XAxis dataKey="month" tick={{fill:"#9ca3af",fontSize:10}}/>
-                          <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
-                          <Tooltip content={<Tip/>}/>
-                          <ReferenceLine y={0}   stroke="#ef4444" strokeDasharray="4 4" label={{value:"£0",fill:"#ef4444",fontSize:9}}/>
-                          <ReferenceLine y={500} stroke="#f59e0b" strokeDasharray="3 3" label={{value:"£500 buffer",fill:"#f59e0b",fontSize:9}}/>
-                          <Line
-                            type="monotone" dataKey="Without Purchase"
-                            stroke="#6b7280" strokeDasharray="6 3" strokeWidth={2} dot={false} name="Without Purchase"
-                          />
-                          <Line
-                            type="monotone" dataKey="With Purchase"
-                            stroke={purchaseSimulation.verdict === "COMFORTABLE" ? "#22c55e" : purchaseSimulation.verdict === "TIGHT" ? "#f59e0b" : "#ef4444"}
-                            strokeWidth={2.5} name="With Purchase"
-                            dot={(props) => {
-                              const point = purchaseSimulation.simMonths[props.index];
-                              if (!point?.isPurchase) return <circle key={props.index} cx={props.cx} cy={props.cy} r={3} fill="#6b7280"/>;
-                              return <circle key={props.index} cx={props.cx} cy={props.cy} r={7} fill="#ef4444" stroke="#fff" strokeWidth={2}/>;
-                            }}
-                          />
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                      {purchaseSimulation.recoversAt && (
-                        <p className="text-xs text-gray-400 mt-3">
-                          <Lightbulb size={12} className="inline mr-1"/> Balance returns above £500 buffer by <span className="text-emerald-400 font-semibold">{purchaseSimulation.recoversAt}</span>.
-                        </p>
-                      )}
-                      {!purchaseSimulation.recoversAt && purchaseSimulation.verdict !== "COMFORTABLE" && (
-                        <p className="text-xs text-amber-400 mt-3">
-                          <AlertTriangle size={12} className="inline mr-1"/> Balance stays below £500 buffer within this window. Consider a higher-income month or spreading the cost.
-                        </p>
-                      )}
-                    </motion.div>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* ═══ MONTHS OF RUNWAY ═══ */}
+            {/* Months of Runway */}
             <div className="bg-gray-900 rounded-2xl p-5">
               <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><Timer size={15} className="text-gray-400"/> Months of Runway</h2>
-              <p className="text-gray-500 text-xs mb-4">How long could you survive if each income scenario played out? Based on current balance and {MONTHLY_SUMMARY.length}-month average spending.</p>
+              <p className="text-gray-500 text-xs mb-4">How long could you survive on current savings if each income scenario played out?</p>
               <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1fr 1fr 1fr"}}>
                 <div className="bg-gray-800 rounded-xl p-4 text-center">
                   <div className="text-5xl font-black text-indigo-400 mb-2">{runway.toFixed(1)}</div>
                   <div className="text-xs font-semibold text-white mb-1">No Income</div>
                   <div className="text-xs text-gray-500">{fmt(currentBalance)} ÷ {fmt(avgSpend)}/mo</div>
                 </div>
-
                 {[
                   { scenario:"Half Income",    income: avgIncome / 2 },
                   { scenario:"Avg Income",     income: avgIncome },
                   { scenario:"Forecast Income",income: monthlyIncome },
                 ].map(s => {
                   const monthlyDeficit = avgSpend - s.income;
-                  let months;
-                  if (monthlyDeficit <= 0) {
-                    months = "∞"; // income covers spending, never runs out
-                  } else {
-                    months = (currentBalance / monthlyDeficit).toFixed(1);
-                  }
+                  const months = monthlyDeficit <= 0 ? "∞" : (currentBalance / monthlyDeficit).toFixed(1);
                   return (
                     <div key={s.scenario} className="bg-gray-800 rounded-xl p-4 text-center">
                       <div className={`text-3xl font-bold mb-2 ${months === "∞" ? "text-emerald-400" : "text-amber-400"}`}>{months}</div>
@@ -1887,10 +1866,10 @@ export default function SpendingTracker() {
                   );
                 })}
               </div>
-              <p className="text-sm text-gray-400 mt-4">Your forecast income of £{monthlyIncome}/mo {monthlyIncome >= avgSpend ? "covers your average spend — runway is infinite on paper, but income isn't guaranteed." : `falls short of your £${Math.round(avgSpend)}/mo average spend, giving you ${(currentBalance / (avgSpend - monthlyIncome)).toFixed(1)} months of buffer.`}</p>
+              <p className="text-sm text-gray-400 mt-4">{monthlyIncome >= avgSpend ? "Your forecast income covers average spending — runway is theoretically infinite, but income isn't guaranteed." : `Forecast income falls short of the £${Math.round(avgSpend)}/mo average spend, giving ${(currentBalance / (avgSpend - monthlyIncome)).toFixed(1)} months of buffer.`}</p>
             </div>
 
-            {/* ═══ SUBSCRIPTION AUDIT ═══ */}
+            {/* Subscription Audit */}
             <div className="bg-gray-900 rounded-2xl p-5">
               <div className="flex justify-between items-start mb-4 flex-wrap gap-3">
                 <div>
@@ -1902,7 +1881,6 @@ export default function SpendingTracker() {
                   <div className="text-xl font-bold text-orange-400">{fmt(totalSubAnnual)}/year</div>
                 </div>
               </div>
-
               <div className="mb-4 bg-amber-900/30 border border-amber-700 rounded-lg p-3 flex gap-3">
                 <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5"/>
                 <div>
@@ -1910,7 +1888,6 @@ export default function SpendingTracker() {
                   <div className="text-amber-200/80 text-xs mt-1">Fitness First + PureGym both appear. Together = £69–88/mo (£828/year). Consolidating to one saves £400+/year.</div>
                 </div>
               </div>
-
               <div className="space-y-2">
                 {SUBSCRIPTIONS.map((sub, idx) => {
                   const Icon = sub.icon;
@@ -1931,13 +1908,8 @@ export default function SpendingTracker() {
                         </div>
                       </div>
                       {sub.optional && (
-                        <button
-                          onClick={() => setSubToggles(prev => ({ ...prev, [idx]: !prev[idx] }))}
-                          className={`text-sm font-semibold px-3 py-1.5 rounded-full transition-all ${
-                            isCancelled
-                              ? "bg-red-900/50 text-red-400 border border-red-700 hover:bg-red-900/80"
-                              : "bg-gray-700 text-gray-300 border border-gray-600 hover:bg-gray-600 hover:text-white"
-                          }`}>
+                        <button onClick={() => setSubToggles(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                          className={`text-sm font-semibold px-3 py-1.5 rounded-full transition-all ${isCancelled ? "bg-red-900/50 text-red-400 border border-red-700 hover:bg-red-900/80" : "bg-gray-700 text-gray-300 border border-gray-600 hover:bg-gray-600 hover:text-white"}`}>
                           {isCancelled ? <span className="flex items-center gap-1"><X size={11}/> Cancel</span> : <span className="flex items-center gap-1"><Check size={11}/> Keep</span>}
                         </button>
                       )}
@@ -1945,18 +1917,11 @@ export default function SpendingTracker() {
                   );
                 })}
               </div>
-
               <div className="mt-4 pt-4 border-t border-gray-700">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-xs text-gray-400">
-                      Subscriptions = <span className="font-semibold text-orange-400">{((totalSubAnnual / historicIncome) * 100).toFixed(1)}%</span> of your annual income. Ideal: under 5%.
-                    </p>
-                    {cancelledAnnualSavings > 0 && (
-                      <p className="text-xs text-emerald-400 mt-1 font-semibold">
-                        <Check size={12} className="inline mr-1"/> Cancelling marked subs saves you {fmt(cancelledAnnualSavings)}/year ({fmt(cancelledAnnualSavings/12)}/mo)
-                      </p>
-                    )}
+                    <p className="text-xs text-gray-400">Subscriptions = <span className="font-semibold text-orange-400">{((totalSubAnnual / historicIncome) * 100).toFixed(1)}%</span> of your annual income. Ideal: under 5%.</p>
+                    {cancelledAnnualSavings > 0 && <p className="text-xs text-emerald-400 mt-1 font-semibold"><Check size={12} className="inline mr-1"/> Cancelling marked subs saves {fmt(cancelledAnnualSavings)}/year ({fmt(cancelledAnnualSavings/12)}/mo)</p>}
                   </div>
                   {cancelledAnnualSavings > 0 && (
                     <div className="bg-emerald-900/30 border border-emerald-700 rounded-xl px-4 py-2 text-right">
@@ -1968,7 +1933,7 @@ export default function SpendingTracker() {
               </div>
             </div>
 
-            {/* ═══ INCOME RELIABILITY SCORE ═══ */}
+            {/* Income Reliability Score */}
             <div className="bg-gray-900 rounded-2xl p-5">
               <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><BarChart3 size={15} className="text-gray-400"/> Income Reliability Score</h2>
               <div className="grid gap-4" style={{gridTemplateColumns:"1fr 1.5fr"}}>
@@ -1982,9 +1947,7 @@ export default function SpendingTracker() {
                       <span className="text-gray-400">Income Variability (CV)</span>
                       <span className="text-gray-300 font-semibold">{(incomeVariance.cv * 100).toFixed(1)}%</span>
                     </div>
-                    <div className="w-full h-2 bg-gray-800 rounded-full">
-                      <div className="h-2 rounded-full bg-amber-500" style={{width:`${Math.min(100, incomeVariance.cv * 100)}%`}}/>
-                    </div>
+                    <div className="w-full h-2 bg-gray-800 rounded-full"><div className="h-2 rounded-full bg-amber-500" style={{width:`${Math.min(100, incomeVariance.cv * 100)}%`}}/></div>
                     <p className="text-xs text-gray-600 mt-0.5">Higher = more volatile. Ideal under 30%.</p>
                   </div>
                   <div>
@@ -1992,19 +1955,16 @@ export default function SpendingTracker() {
                       <span className="text-gray-400">Emergency Buffer (vs £2,500 target)</span>
                       <span className="text-gray-300 font-semibold">{((currentBalance / 2500) * 100).toFixed(0)}%</span>
                     </div>
-                    <div className="w-full h-2 bg-gray-800 rounded-full">
-                      <div className="h-2 rounded-full bg-emerald-500" style={{width:`${Math.min(100, (currentBalance / 2500) * 100)}%`}}/>
-                    </div>
+                    <div className="w-full h-2 bg-gray-800 rounded-full"><div className="h-2 rounded-full bg-emerald-500" style={{width:`${Math.min(100, (currentBalance / 2500) * 100)}%`}}/></div>
                   </div>
                 </div>
               </div>
-
               <div className="mt-4 pt-4 border-t border-gray-700 space-y-2 text-sm">
                 <div className="flex items-start gap-3">
                   <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5"/>
                   <div>
                     <div className="font-semibold text-amber-300">{MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).label} was the most vulnerable month</div>
-                    <div className="text-gray-400 text-xs mt-0.5">Only {fmt(MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).income)} income vs {fmt(MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).spending)} spending — a {fmt(Math.abs(MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).net))} deficit. You need a buffer to absorb months like this.</div>
+                    <div className="text-gray-400 text-xs mt-0.5">Only {fmt(MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).income)} income vs {fmt(MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).spending)} out — a {fmt(Math.abs(MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).net))} deficit. You need a buffer to absorb months like this.</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -2020,54 +1980,7 @@ export default function SpendingTracker() {
           </motion.div>
         )}
 
-        {/* ═══════════════ TRANSACTIONS ═══════════════ */}
-        {tab === "transactions" && (
-          <motion.div key="transactions"
-            initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
-            transition={{duration:0.18}} className="space-y-4">
-            <div className="bg-gray-900 rounded-2xl p-4 flex flex-wrap gap-3 items-center">
-              <input type="text" placeholder="Search transactions…" value={search} onChange={e => setSearch(e.target.value)}
-                className="flex-1 min-w-48 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"/>
-              <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
-                className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
-                {allCats.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <select value={filterDir} onChange={e => setFilterDir(e.target.value)}
-                className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
-                <option value="All">All</option>
-                <option value="in">Income</option>
-                <option value="out">Spending</option>
-              </select>
-              <span className="text-gray-500 text-sm">{filteredTxs.length} entries</span>
-            </div>
-            <div className="bg-gray-900 rounded-2xl overflow-hidden">
-              <div className="grid text-xs font-semibold text-gray-500 uppercase px-5 py-3 border-b border-gray-800"
-                style={{gridTemplateColumns:"90px 70px 1fr 160px 80px 100px"}}>
-                <span>Date</span><span>Month</span><span>Description</span><span>Category</span><span>Type</span><span className="text-right">Amount</span>
-              </div>
-              <div className="max-h-96 overflow-y-auto divide-y divide-gray-800/40">
-                {filteredTxs.map((tx, i) => (
-                  <div key={`${tx.date}:${tx.desc}:${tx.amount}:${i}`} className="grid items-center px-5 py-2.5 hover:bg-gray-800/50 text-sm"
-                    style={{gridTemplateColumns:"90px 70px 1fr 160px 80px 100px"}}>
-                    <span className="text-gray-500 text-xs">{tx.date.slice(5)}</span>
-                    <span className="text-gray-600 text-xs">{tx.month}</span>
-                    <span className="text-gray-200 truncate pr-2">{tx.desc}</span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: CAT_COLORS[tx.cat] || "#6366f1"}}/>
-                      <span className="text-gray-400 text-xs truncate">{tx.cat}</span>
-                    </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${tx.dir==="in" ? "bg-green-900/40 text-green-400" : "bg-red-900/30 text-red-400"}`}>
-                      {tx.dir === "in" ? "↑ In" : "↓ Out"}
-                    </span>
-                    <span className={`text-right font-semibold ${tx.dir==="in" ? "text-green-400" : "text-white"}`}>
-                      {tx.dir === "in" ? "+" : "-"}{fmt(tx.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
+
 
         </AnimatePresence>
       </div>
@@ -2188,6 +2101,8 @@ export default function SpendingTracker() {
                       setShowImport(false);
                       const lastMonth = merged.summary[merged.summary.length - 1]?.label;
                       if (lastMonth) setSelMonth(lastMonth);
+                      setTab("plan");
+                      setImportSuccess(true);
                     }}
                     className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all">
                     {importedData ? `Merge ${importPreview.summary.filter(m => !new Set(importedData.summary.map(x => x.label)).has(m.label)).length} new month(s) →` : "Load My Data →"}
