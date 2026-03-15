@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 // ══════════════════════════════════════════════════════════════════════════════
-// REAL DATA – LLOYDS BANK, 8 MONTHS: JUNE 2025 → JANUARY 2026
+// SAMPLE DATA – 8 MONTHS: JUNE 2025 → JANUARY 2026
 // ══════════════════════════════════════════════════════════════════════════════
 const DEFAULT_MONTHLY_SUMMARY = [
   { month:"Jun", label:"Jun '25",  income:3646.70, spending:2385.25, net: 1261.45, balanceEnd:2163.00 },
@@ -488,6 +488,8 @@ export default function SpendingTracker() {
   const runway = currentBalance / avgSpend;
   const leftToSpend = currentBalance - totalFixed;
   const ageOfMoney = Math.round(currentBalance / (avgSpend / 30));
+  const worstMonth = [...MONTHLY_SUMMARY].sort((a,b) => a.net - b.net)[0];
+  const bestMonth  = [...MONTHLY_SUMMARY].sort((a,b) => b.net - a.net)[0];
 
   const monthOverMonthDeltas = useMemo(() => {
     const months = MONTHLY_SUMMARY.map(m => m.label);
@@ -508,14 +510,12 @@ export default function SpendingTracker() {
     const entert   = catTotals.find(([c]) => c === "Entertainment & Nights Out")?.[1] || 0;
     const social   = eatOut + entert;
     const socialPct = (social / historicSpend) * 100;
-    const novemberCrash = MONTHLY_SUMMARY.find(m => m.label === "Nov '25");
-    const janDiscipline = MONTHLY_SUMMARY.find(m => m.label === "Jan '26");
 
     let archetype, trait, roast;
     if (socialPct > 20) {
       archetype = "The Social Economist";
       trait = `${socialPct.toFixed(0)}% of your spending goes on social life and experiences`;
-      roast = `You spent £78.50 at Simmons Bars in a single November night. Your income that month was £811. The bar didn't notice. Your balance did.`;
+      roast = `Your worst month had ${fmt(worstMonth.income)} coming in and ${fmt(worstMonth.spending)} going out. The bars didn't notice. Your balance did.`;
     } else {
       archetype = "The Steady Planner";
       trait = "You balance experiences with discipline better than most";
@@ -523,8 +523,8 @@ export default function SpendingTracker() {
     }
     return { archetype, trait, roast,
       socialPct: socialPct.toFixed(1),
-      bestMonth: janDiscipline ? "Jan '26 — lowest spend, still social" : "",
-      worstMonth: novemberCrash ? "Nov '25 — only £811 income, £2,524 out" : "",
+      bestMonth: bestMonth ? `${bestMonth.label} — lowest spend, positive net` : "",
+      worstMonth: worstMonth ? `${worstMonth.label} — only ${fmt(worstMonth.income)} in, ${fmt(worstMonth.spending)} out` : "",
     };
   }, [catTotals, historicSpend]);
 
@@ -769,7 +769,7 @@ export default function SpendingTracker() {
             <p className="text-gray-400 text-sm mt-0.5">
               {importedData
                 ? `Imported · ${importedData.monthCount} months · ${importedData.transactions.length} transactions`
-                : "Lloyds Bank · Jun 2025 – Jan 2026 · 8 months (demo)"}
+                : `Sample data · ${MONTHS[0]} – ${MONTHS[MONTHS.length-1]} · ${MONTHS.length} months (demo)`}
             </p>
           </div>
           <div className="flex gap-3 items-end flex-wrap">
@@ -984,15 +984,15 @@ export default function SpendingTracker() {
             </div>
 
             <div className="bg-gray-900 rounded-2xl p-5">
-              <h2 className="text-base font-semibold mb-3 flex items-center gap-2"><Search size={15} className="text-gray-400"/> Key Insights from Your Statements</h2>
+              <h2 className="text-base font-semibold mb-3 flex items-center gap-2"><Search size={15} className="text-gray-400"/> Sample Data Highlights</h2>
               <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr"}}>
                 {[
-                  { icon:Stethoscope, title:"NHS Bursary Confirmed",       body:"£1,537 lands in Oct & Dec — your NHSBSA healthcare bursary. Arrives every ~2 months. Factor into planning.",  color:"text-sky-400" },
-                  { icon:Train,       title:"Travelcard = £172.50 exactly", body:"Jan '26 confirms LUL Ticket Machine £172.50 — your Zone 1–3 monthly card. Injury months push transport to £460+.", color:"text-blue-400" },
-                  { icon:AlertTriangle,title:"November was critical",       body:"Only £811 in vs £2,524 out — a £1,713 deficit. Balance dropped to £1,729. Luckily Oct was strong.",            color:"text-amber-400" },
-                  { icon:TrendingDown, title:"Jan '26 is your best month",  body:"Lowest spending in 8 months (£1,964) and positive net (+£412). January disciplines are working.",              color:"text-emerald-400" },
-                  { icon:Dumbbell,    title:"Double gym membership",        body:"Fitness First + PureGym both appearing. £69–88/mo. Consolidating to one could save £400+/year.",              color:"text-orange-400" },
-                  { icon:Package,     title:"'Other' category needs review", body:"Oct 'Other' = £1,134. Large untracked category — worth reviewing statements directly to identify patterns.",   color:"text-purple-400" },
+                  { icon:Stethoscope, title:"Irregular income pattern",      body:"Some months include a healthcare bursary on top of the regular stipend — income swings significantly between months. Always plan around the minimum.",  color:"text-sky-400" },
+                  { icon:Train,       title:"Fixed transport cost",           body:"A monthly travelcard appears as a precise recurring charge. Transport spikes in months with higher Uber usage — worth tracking separately.", color:"text-blue-400" },
+                  { icon:AlertTriangle,title:"One critical deficit month",    body:`${worstMonth?.label}: only ${fmt(worstMonth?.income||0)} in vs ${fmt(worstMonth?.spending||0)} out — a ${fmt(Math.abs(worstMonth?.net||0))} deficit. A strong prior month absorbed the gap.`, color:"text-amber-400" },
+                  { icon:TrendingDown, title:"Best month shows what's possible", body:`${bestMonth?.label}: lowest spending in the dataset and a positive net of ${fmt(bestMonth?.net||0)}. Shows what discipline delivers.`,              color:"text-emerald-400" },
+                  { icon:Dumbbell,    title:"Duplicate subscription category", body:"Two gym memberships appear simultaneously across multiple months. Consolidating to one would save £400+/year.",              color:"text-orange-400" },
+                  { icon:Package,     title:"'Other' category needs review",  body:"One month shows £1,134 in untracked 'Other' spending. Use the drill-down to reassign transactions and get accurate category totals.",   color:"text-purple-400" },
                 ].map(i => {
                   const IIcon = i.icon;
                   return (
@@ -1216,9 +1216,9 @@ export default function SpendingTracker() {
               <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><Film size={15} className="text-gray-400"/> Scenario Planning</h2>
               <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
                 {[
-                  { label:"Best Case",    income:3500, desc:"NHS Bursary + UCL Stipend" },
-                  { label:"Normal Month", income:2200, desc:"UCL Stipend only" },
-                  { label:"Hard Month",   income:811,  desc:"Family support only (Nov-like)" },
+                  { label:"Best Case",    income:3500, desc:"Multiple income sources" },
+                  { label:"Normal Month", income:2200, desc:"Single main income" },
+                  { label:"Hard Month",   income:811,  desc:"Minimal income month" },
                 ].map(s => (
                   <button key={s.label} onClick={() => setMonthlyIncome(s.income)}
                     className={`p-4 rounded-xl border transition-all text-left ${
@@ -1239,7 +1239,7 @@ export default function SpendingTracker() {
                 <label className="text-xs text-gray-400 mb-1.5 block">Expected Monthly Income (£)</label>
                 <input type="number" value={monthlyIncome} onChange={e => setMonthlyIncome(Number(e.target.value))}
                   className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
-                <p className="text-gray-500 text-xs mt-1">Avg actual: {fmt(avgIncome)}/mo over 8 months</p>
+                <p className="text-gray-500 text-xs mt-1">Avg actual: {fmt(avgIncome)}/mo over {MONTHLY_SUMMARY.length} months</p>
               </div>
               <div>
                 <label className="text-xs text-gray-400 mb-1.5 block">Forecast Horizon</label>
@@ -1254,7 +1254,7 @@ export default function SpendingTracker() {
                     injuryActive ? "bg-amber-900/40 border-amber-600 text-amber-300" : "bg-emerald-900/40 border-emerald-600 text-emerald-300"
                   }`}>
                   <span className="flex items-center justify-center gap-2">
-                    {injuryActive ? <><Activity size={14}/> Injured — high transport (£463/mo)</> : <><Zap size={14}/> Walking — Travelcard (£172.50/mo)</>}
+                    {injuryActive ? <><Activity size={14}/> High transport mode (£463/mo)</> : <><Zap size={14}/> Standard transport (£172.50/mo)</>}
                   </span>
                 </button>
               </div>
@@ -1347,7 +1347,7 @@ export default function SpendingTracker() {
 
             <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
               <h2 className="text-base font-semibold mb-1 flex items-center gap-2"><TrendingUp size={15} className="text-gray-400"/> Balance Projection</h2>
-              <p className="text-gray-500 text-xs mb-4">Historical actuals + forecast from Feb '26. Starting balance: £2,223.62</p>
+              <p className="text-gray-500 text-xs mb-4">Historical actuals + forecast from {FORECAST_MONTHS[0]} '{String(new Date().getFullYear()).slice(2)}. Starting balance: {fmt(currentBalance)}</p>
               <ResponsiveContainer width="100%" height={260}>
                 <ComposedChart data={balanceBridge}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
@@ -1382,7 +1382,7 @@ export default function SpendingTracker() {
                 ))}
               </div>
               <div className="px-5 py-2.5 border-t border-gray-800 text-xs text-gray-500">
-                Income: £{monthlyIncome}/mo · Fixed: {fmt(totalFixed)}/mo · Variable: {fmt(totalVar)}/mo · Start: £2,223.62
+                Income: £{monthlyIncome}/mo · Fixed: {fmt(totalFixed)}/mo · Variable: {fmt(totalVar)}/mo · Start: {fmt(currentBalance)}
               </div>
             </div>
 
@@ -1458,9 +1458,9 @@ export default function SpendingTracker() {
                 <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><Lightbulb size={14} className="text-gray-400"/> Income Patterns</h2>
                 <div className="space-y-3 text-sm">
                   {[
-                    { src:"UCL Stipend",    icon:GraduationCap, note:"Irregular — ranges from £300 (Nov) to £3,776 (Sep). Tied to term dates and grant disbursements.", color:"text-green-400" },
-                    { src:"NHS Bursary",    icon:Stethoscope,   note:"£1,537 in Oct & Dec. Appears bi-monthly. As a healthcare student, budget around this every 2 months.", color:"text-sky-400" },
-                    { src:"Family Support", icon:Users,         note:"Very reliable — £300–525 every single month. Your most dependable income anchor.", color:"text-blue-400" },
+                    { src:"UCL Stipend",    icon:GraduationCap, note:"Irregular — varies significantly month to month. Tied to term dates and grant disbursements. Don't treat the high months as the norm.", color:"text-green-400" },
+                    { src:"NHS Bursary",    icon:Stethoscope,   note:"Appears bi-monthly rather than every month. Plan cash flow carefully in the months it doesn't arrive.", color:"text-sky-400" },
+                    { src:"Family Support", icon:Users,         note:"The most consistent income source — arrives every month within a predictable range. A reliable baseline to budget against.", color:"text-blue-400" },
                     { src:"Student Loan",   icon:Landmark,      note:"SLC disbursements in Jun, Jul, Sep, Jan — typically at term start. Don't treat as regular income.", color:"text-purple-400" },
                   ].map(i => {
                     const PIIcon = i.icon;
@@ -1486,7 +1486,7 @@ export default function SpendingTracker() {
             initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
             transition={{duration:0.18}} className="space-y-5">
             <div className="bg-indigo-900/20 border border-indigo-800/40 rounded-xl p-4 text-sm text-indigo-300">
-              <Lightbulb size={14} className="inline mr-1.5 text-indigo-400"/> Goals track your savings targets separately from your account balance. Your current balance (£2,223.62) is your full pot — allocate portions to goals as you actively set money aside.
+              <Lightbulb size={14} className="inline mr-1.5 text-indigo-400"/> Goals track your savings targets separately from your account balance. Your current balance ({fmt(currentBalance)}) is your full pot — allocate portions to goals as you actively set money aside.
             </div>
 
             <div className="grid gap-3" style={{gridTemplateColumns:"repeat(3,1fr)"}}>
@@ -1788,8 +1788,8 @@ export default function SpendingTracker() {
               <div className="mb-4 bg-amber-900/30 border border-amber-700 rounded-lg p-3 flex gap-3">
                 <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5"/>
                 <div>
-                  <div className="font-semibold text-amber-300 text-sm">You're paying for TWO gym memberships</div>
-                  <div className="text-amber-200/80 text-xs mt-1">Fitness First + PureGym together = £69–88/mo (£828/year). Cancelling one saves you over £400 annually.</div>
+                  <div className="font-semibold text-amber-300 text-sm">Two gym memberships in sample data</div>
+                  <div className="text-amber-200/80 text-xs mt-1">Fitness First + PureGym both appear. Together = £69–88/mo (£828/year). Consolidating to one saves £400+/year.</div>
                 </div>
               </div>
 
@@ -1885,15 +1885,15 @@ export default function SpendingTracker() {
                 <div className="flex items-start gap-3">
                   <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5"/>
                   <div>
-                    <div className="font-semibold text-amber-300">November was your most vulnerable month</div>
-                    <div className="text-gray-400 text-xs mt-0.5">Only £811 income vs £2,524 spending. NHS Bursary didn't arrive, UCL stipend minimal. This created a £1,713 deficit. You need a buffer to absorb months like this.</div>
+                    <div className="font-semibold text-amber-300">{MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).label} was the most vulnerable month</div>
+                    <div className="text-gray-400 text-xs mt-0.5">Only {fmt(MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).income)} income vs {fmt(MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).spending)} spending — a {fmt(Math.abs(MONTHLY_SUMMARY.reduce((w,m) => m.net < w.net ? m : w).net))} deficit. You need a buffer to absorb months like this.</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Lightbulb size={18} className="text-emerald-400 flex-shrink-0 mt-0.5"/>
                   <div>
                     <div className="font-semibold text-emerald-300">Recommendation</div>
-                    <div className="text-gray-400 text-xs mt-0.5">Keep at least £2,500 untouchable as emergency reserve. This gives you a full November-like month before touching credit or student loan.</div>
+                    <div className="text-gray-400 text-xs mt-0.5">Keep at least £2,500 untouchable as emergency reserve. This covers a full worst-case month before touching credit or borrowing.</div>
                   </div>
                 </div>
               </div>
@@ -1980,7 +1980,7 @@ export default function SpendingTracker() {
                     dragOver ? "border-indigo-500 bg-indigo-900/20" : "border-gray-700 hover:border-gray-500 hover:bg-gray-800/40"
                   }`}>
                   <Folder size={36} className="text-gray-400 mb-3"/>
-                  <p className="text-white font-semibold mb-1">Drop your Lloyds CSV here</p>
+                  <p className="text-white font-semibold mb-1">Drop your bank CSV here</p>
                   <p className="text-gray-500 text-sm">or click to browse</p>
                   <p className="text-gray-600 text-xs mt-3">Internet Banking → Statements → Export as CSV</p>
                   <input ref={csvInputRef} type="file" accept=".csv" className="hidden"
@@ -1989,7 +1989,7 @@ export default function SpendingTracker() {
 
                 <div className="mt-4 bg-gray-800/50 rounded-xl p-3 space-y-1 text-xs text-gray-400">
                   <p>Expected columns: <span className="text-gray-300">Transaction Date · Transaction Description · Debit Amount · Credit Amount · Balance</span></p>
-                  <p>Transactions are auto-categorised by keyword. Works best with Lloyds Bank exports.</p>
+                  <p>Transactions are auto-categorised by keyword. Works best with UK bank CSV exports.</p>
                 </div>
 
                 {importedData && (

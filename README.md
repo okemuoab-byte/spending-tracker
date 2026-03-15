@@ -65,18 +65,9 @@ npm run build      # production build
 
 ## What's left to build
 
-### Priority 1 — Vitest testing
-- Set up Vitest + React Testing Library.
-- Extract `autocat`, `autocatInc`, `parseCSV`, `fmt`, `fmtK` to `src/utils/finance.js`.
-- Tests for all pure functions + financial calculations.
-- Run `npm test -- --watch` alongside dev server.
-
-### Priority 2 — Chart entrance animations
-- Wrap `ResponsiveContainer` charts in `motion.div` with staggered fade+scale entrance.
-
-### Priority 3 — "Other" feeds into charts
-- Currently reassigning "Other" transactions updates the transaction list but not the pie chart.
-- Recompute `MONTHLY_CATEGORIES` from the override-applied transaction list so charts reflect changes.
+- Expand CSV parser to support more bank formats (Monzo, Starling, HSBC, NatWest)
+- User-configurable category rules (add/edit keyword → category mappings in the UI)
+- Data persistence via localStorage so data survives page refresh
 
 ---
 
