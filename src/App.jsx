@@ -423,6 +423,30 @@ function OtherDrillModal({ month, transactions, onClose, onReassign }) {
   );
 }
 
+// ── GOAL INPUT WITH SUCCESS FEEDBACK ─────────────────────────────────────────
+function GoalInput({ goal, setGoals }) {
+  const [flash, setFlash] = useState(null); // e.g. "+£50"
+  return (
+    <div className="mt-3 flex gap-2 items-center">
+      <input type="number" placeholder="Add saved amount £" step="10" min="0"
+        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500"
+        onKeyDown={e => {
+          if (e.key === "Enter") {
+            const v = parseFloat(e.target.value) || 0;
+            if (v <= 0) return;
+            setGoals(prev => prev.map(g => g.id === goal.id ? {...g, saved: Math.min(g.target, g.saved + v)} : g));
+            setFlash(`+${v % 1 === 0 ? `£${v}` : `£${v.toFixed(2)}`}`);
+            setTimeout(() => setFlash(null), 2000);
+            e.target.value = "";
+          }
+        }}/>
+      {flash
+        ? <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1 transition-all"><Check size={12}/> {flash} saved</span>
+        : <span className="text-gray-500 text-xs">Press Enter to log</span>}
+    </div>
+  );
+}
+
 // ── MAIN ─────────────────────────────────────────────────────────────────────
 export default function SpendingTracker() {
   const [tab, setTab]             = useState("overview");
@@ -943,7 +967,7 @@ export default function SpendingTracker() {
                 <p className="text-gray-500 text-xs mt-2">Rent + phone + subs + gym — goes out regardless</p>
               </div>
 
-              {/* Age of Money (stolen from YNAB) */}
+              {/* Age of Money */}
               <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
                 <div className="flex items-center gap-2 mb-1">
                   <Clock size={14} className="text-amber-400"/>
@@ -1345,7 +1369,7 @@ export default function SpendingTracker() {
                 <label className="text-xs text-gray-400 mb-1.5 block">Forecast Horizon</label>
                 <input type="range" min={3} max={11} value={horizonMonths}
                   onChange={e => setHorizonMonths(Number(e.target.value))} className="w-full accent-indigo-500 mt-2"/>
-                <p className="text-gray-400 text-xs mt-1">{horizonMonths} months (to {FORECAST_MONTHS[horizonMonths - 1]} '26)</p>
+                <p className="text-gray-400 text-xs mt-1">{horizonMonths} months (to {forecastData[horizonMonths - 1]?.month ?? "—"})</p>
               </div>
               <div>
                 <label className="text-xs text-gray-400 mb-1.5 block">Injury / Transport Mode</label>
@@ -1611,10 +1635,12 @@ export default function SpendingTracker() {
                 const [monthStr, yearStr] = goal.date?.split(" ") ?? ["", ""];
                 const monthIdx = monthNames.indexOf(monthStr);
                 const now = new Date();
-                const monthsAway = monthIdx === -1 ? 0 : Math.max(0, (parseInt(yearStr) - now.getFullYear()) * 12 + (monthIdx - now.getMonth()));
+                const rawMonthsAway = monthIdx === -1 ? 0 : (parseInt(yearStr) - now.getFullYear()) * 12 + (monthIdx - now.getMonth());
+                const isOverdue = rawMonthsAway < 0;
+                const monthsAway = Math.max(0, rawMonthsAway);
                 const stillNeeded = Math.max(0, goal.target - goal.saved);
                 const monthlyNeeded = monthsAway > 0 ? stillNeeded / monthsAway : stillNeeded;
-                const isAchievable = monthlyNeeded <= Math.max(projectedNet, 0) + 1;
+                const isAchievable = !isOverdue && monthlyNeeded <= Math.max(projectedNet, 0);
 
                 return (
                   <div key={goal.id} className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
@@ -1641,7 +1667,9 @@ export default function SpendingTracker() {
                     <div className="grid gap-3" style={{gridTemplateColumns:"1fr 1fr 1fr 1fr"}}>
                       <div className="bg-gray-800 rounded-lg p-3">
                         <div className="text-xs text-gray-500 mb-1">Months to Go</div>
-                        <div className="text-lg font-bold text-white">{monthsAway}</div>
+                        <div className={`text-lg font-bold ${isOverdue ? "text-red-400" : "text-white"}`}>
+                          {isOverdue ? "Overdue" : monthsAway}
+                        </div>
                       </div>
                       <div className="bg-gray-800 rounded-lg p-3">
                         <div className="text-xs text-gray-500 mb-1">Still Needed</div>
@@ -1649,28 +1677,17 @@ export default function SpendingTracker() {
                       </div>
                       <div className="bg-gray-800 rounded-lg p-3">
                         <div className="text-xs text-gray-500 mb-1">Save /month</div>
-                        <div className="text-lg font-bold text-indigo-400">{fmt(monthlyNeeded)}</div>
+                        <div className="text-lg font-bold text-indigo-400">{monthsAway > 0 ? fmt(monthlyNeeded) : "—"}</div>
                       </div>
                       <div className="bg-gray-800 rounded-lg p-3">
                         <div className="text-xs text-gray-500 mb-1">Achievable?</div>
-                        <div className={`text-lg font-bold flex items-center gap-1 ${isAchievable ? "text-emerald-400" : "text-amber-400"}`}>
-                          {isAchievable ? <><Check size={14}/> Yes</> : <><AlertTriangle size={13}/> Tight</>}
+                        <div className={`text-lg font-bold flex items-center gap-1 ${isOverdue ? "text-red-400" : isAchievable ? "text-emerald-400" : "text-amber-400"}`}>
+                          {isOverdue ? <><AlertTriangle size={13}/> Overdue</> : isAchievable ? <><Check size={14}/> Yes</> : <><AlertTriangle size={13}/> Tight</>}
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-3 flex gap-2 items-center">
-                      <input type="number" placeholder="Add saved amount £" step="10" min="0"
-                        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500"
-                        onKeyDown={e => {
-                          if (e.key === "Enter") {
-                            const v = parseFloat(e.target.value) || 0;
-                            setGoals(prev => prev.map(g => g.id === goal.id ? {...g, saved: Math.min(g.target, g.saved + v)} : g));
-                            e.target.value = "";
-                          }
-                        }}/>
-                      <span className="text-gray-500 text-xs">Press Enter to log</span>
-                    </div>
+                    <GoalInput goal={goal} setGoals={setGoals}/>
                   </div>
                 );
               })}
@@ -1732,7 +1749,7 @@ export default function SpendingTracker() {
                     className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500"/>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400 mb-2 block">When? (month in 2026)</label>
+                  <label className="text-xs text-gray-400 mb-2 block">When? (month to simulate)</label>
                   <input type="month" min={`${fcStartYear}-${String(fcStartIdx + 1).padStart(2,"0")}`} max={`${fcStartYear + 1}-12`} value={affordabilityDate}
                     onChange={e => setAffordabilityDate(e.target.value)}
                     className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
@@ -1748,7 +1765,7 @@ export default function SpendingTracker() {
 
               {!purchaseSimulation && affordabilityAmount && affordabilityDate && (
                 <div className="mt-4 bg-amber-900/20 border border-amber-700 rounded-xl p-3 text-amber-300 text-sm">
-                  Please select a month in 2026 (Feb–Dec) to simulate.
+                  Please select a month within the forecast window ({forecastData[0]?.month ?? "—"} – {forecastData[forecastData.length - 1]?.month ?? "—"}).
                 </div>
               )}
 
@@ -2095,7 +2112,11 @@ export default function SpendingTracker() {
 
                 {importedData && (
                   <button
-                    onClick={() => { setImportedData(null); setImportPreview(null); setShowImport(false); setSelMonth("Jan '26"); localStorage.removeItem("spendingData"); localStorage.removeItem("catOverrides"); setTxCatOverrides({}); }}
+                    onClick={() => {
+                      if (!window.confirm("Revert to demo data? This will remove all imported data and overrides.")) return;
+                      setImportedData(null); setImportPreview(null); setShowImport(false); setSelMonth("Jan '26");
+                      localStorage.removeItem("spendingData"); localStorage.removeItem("catOverrides"); setTxCatOverrides({});
+                    }}
                     className="mt-3 w-full py-2 rounded-xl text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-red-700 hover:bg-red-900/20 transition-all">
                     ↩ Revert to demo data
                   </button>
