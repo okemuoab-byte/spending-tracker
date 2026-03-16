@@ -13,7 +13,7 @@ import {
   ShoppingCart, Music, Dumbbell, Tv, Smartphone, Package, Home, Bus,
   UtensilsCrossed, Stethoscope, Shield, Plane, Laptop, GraduationCap,
   Users, Landmark, Gamepad2, Briefcase, ShoppingBag, Lock, Radio,
-  Timer, Folder, Search, Train, Film, Cloud, X, Check
+  Timer, Folder, Search, Train, Film, Cloud, X, Check, Pencil
 } from "lucide-react";
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -197,7 +197,7 @@ const CAT_COLORS = {
   Rent:"#6366f1", Groceries:"#22c55e", Transport:"#3b82f6", "Eating Out & Cafes":"#f59e0b",
   "Entertainment & Nights Out":"#ec4899", Shopping:"#8b5cf6", Healthcare:"#14b8a6",
   Subscriptions:"#f97316", "Gym & Fitness":"#10b981", "Phone Bill":"#64748b",
-  "Personal Transfers":"#a78bfa", Other:"#94a3b8",
+  "Personal Care":"#f472b6", "Personal Transfers":"#a78bfa", Other:"#94a3b8",
   Salary:"#4ade80", Freelance:"#38bdf8", "Side Income":"#60a5fa",
   Bonus:"#c084fc", "Other Income":"#94a3b8",
 };
@@ -205,14 +205,14 @@ const INC_COLORS = ["#4ade80","#38bdf8","#60a5fa","#c084fc","#94a3b8","#f9a8d4"]
 
 import { fmt, fmtK, CAT_RULES, INC_RULES, autocat, autocatInc } from "./utils/finance.js";
 
-const Tip = ({ active, payload, label }) => {
+const Tip = ({ active, payload, label, fmt: fmtFn = fmt }) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-gray-900 border border-gray-700 rounded-xl p-3 shadow-xl text-sm min-w-36">
       <p className="font-semibold text-white mb-2">{label}</p>
       {payload.map((p,i) => (
         <p key={i} style={{color:p.color}} className="flex justify-between gap-4">
-          <span>{p.name}</span><span className="font-bold">{typeof p.value==="number"?fmt(p.value):p.value}</span>
+          <span>{p.name}</span><span className="font-bold">{typeof p.value==="number"?fmtFn(p.value):p.value}</span>
         </p>
       ))}
     </div>
@@ -236,8 +236,8 @@ const DEFAULT_VAR = [
   { id:"shopping",  label:"Shopping",                amount:60.00,  icon:ShoppingBag },
   { id:"other",     label:"Other / Misc",            amount:80.00,  icon:Package },
 ];
-const FORECAST_MONTHS = ["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const FORECAST_MONTH_NUMS = [2,3,4,5,6,7,8,9,10,11,12];
+
+
 const MO_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const THEMES = [
@@ -489,10 +489,10 @@ function AnimatedNumber({ value, format = fmt }) {
 // ── OTHER DRILL-DOWN MODAL ────────────────────────────────────────────────────
 const ALL_CAT_NAMES = [
   "Rent","Groceries","Transport","Eating Out & Cafes","Entertainment & Nights Out",
-  "Shopping","Healthcare","Subscriptions","Gym & Fitness","Phone Bill","Personal Transfers","Other",
+  "Shopping","Healthcare","Subscriptions","Gym & Fitness","Phone Bill","Personal Care","Personal Transfers","Other",
 ];
 
-function OtherDrillModal({ month, transactions, onClose, onReassign }) {
+function OtherDrillModal({ month, transactions, onClose, onReassign, fmt }) {
   const otherTxs = transactions.filter(t => t.cat === "Other" && t.month === month && t.dir === "out");
   const [edits, setEdits] = useState({});
   const changed = Object.keys(edits).filter(k => edits[k] !== "Other").length;
@@ -523,7 +523,7 @@ function OtherDrillModal({ month, transactions, onClose, onReassign }) {
             <div key={`${tx.date}:${tx.desc}:${tx.amount}`} className={`flex items-center gap-3 rounded-xl px-4 py-2.5 transition-all ${edits[idx] && edits[idx] !== "Other" ? "bg-indigo-900/30 border border-indigo-800/50" : "bg-gray-800"}`}>
               <span className="text-gray-500 text-xs w-12 flex-shrink-0">{tx.date.slice(5)}</span>
               <span className="flex-1 text-sm text-gray-200 truncate">{tx.desc}</span>
-              <span className="text-white font-semibold text-sm flex-shrink-0 mr-1">-£{tx.amount.toFixed(2)}</span>
+              <span className="text-white font-semibold text-sm flex-shrink-0 mr-1">-{fmt(tx.amount)}</span>
               <select value={edits[idx] ?? "Other"}
                 onChange={e => setEdits(p => ({...p, [idx]: e.target.value}))}
                 className="bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 flex-shrink-0">
@@ -545,7 +545,7 @@ function OtherDrillModal({ month, transactions, onClose, onReassign }) {
 }
 
 // ── GOAL INPUT WITH SUCCESS FEEDBACK ─────────────────────────────────────────
-function GoalInput({ goal, setGoals }) {
+function GoalInput({ goal, setGoals, sym }) {
   const [flash, setFlash] = useState(null); // e.g. "+£50"
   return (
     <div className="mt-3 flex gap-2 items-center">
@@ -556,7 +556,7 @@ function GoalInput({ goal, setGoals }) {
             const v = parseFloat(e.target.value) || 0;
             if (v <= 0) return;
             setGoals(prev => prev.map(g => g.id === goal.id ? {...g, saved: Math.min(g.target, g.saved + v)} : g));
-            setFlash(`+${v % 1 === 0 ? `£${v}` : `£${v.toFixed(2)}`}`);
+            setFlash(`+${v % 1 === 0 ? `${sym}${v}` : `${sym}${v.toFixed(2)}`}`);
             setTimeout(() => setFlash(null), 2000);
             e.target.value = "";
           }
@@ -571,17 +571,100 @@ function GoalInput({ goal, setGoals }) {
 // ── GOAL ICONS MAP ───────────────────────────────────────────────────────────
 const GOAL_ICONS = { Shield, Plane, Laptop, Star, Target, Home, Zap, Package, GraduationCap, Wallet, Dumbbell, ShoppingBag };
 
+// ── QUICK-ADD TRANSACTION MODAL ───────────────────────────────────────────────
+const MO_ABBR_QA = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function QuickAddModal({ onSave, onClose, sym }) {
+  const [date,   setDate]   = useState(new Date().toISOString().slice(0, 10));
+  const [desc,   setDesc]   = useState("");
+  const [amount, setAmount] = useState("");
+  const [dir,    setDir]    = useState("out");
+  const [cat,    setCat]    = useState("Other");
+
+  const spendCats = ALL_CAT_NAMES;
+  const incCats   = ["Salary","Freelance","Bonus","Side Income","Other Income"];
+  const cats      = dir === "in" ? incCats : spendCats;
+
+  const handleSave = () => {
+    if (!desc.trim() || !amount || !date) return;
+    const d = new Date(date);
+    const month = `${MO_ABBR_QA[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`;
+    onSave({ date, desc: desc.trim(), cat, amount: Math.abs(parseFloat(amount)), dir, month, manual: true });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm shadow-2xl">
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-base font-bold text-white">Add Transaction</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={18}/></button>
+        </div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            {[["out","Spending ↓"],["in","Income ↑"]].map(([val, label]) => (
+              <button key={val} onClick={() => { setDir(val); setCat(val === "in" ? "Salary" : "Other"); }}
+                className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${dir === val
+                  ? val === "in" ? "bg-emerald-700 text-white" : "bg-red-900/60 text-red-300 border border-red-700"
+                  : "bg-gray-800 text-gray-500 border border-gray-700"}`}>{label}</button>
+            ))}
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-1.5 block">Description</label>
+            <input type="text" value={desc} onChange={e => setDesc(e.target.value)} placeholder="e.g. Tesco, Costa, Salary..."
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-400 mb-1.5 block">Amount ({sym})</label>
+              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} min="0" step="0.01" placeholder="0.00"
+                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1.5 block">Date</label>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-1.5 block">Category</label>
+            <select value={cat} onChange={e => setCat(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500">
+              {cats.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl bg-gray-800 text-gray-300 text-sm font-semibold hover:bg-gray-700 transition-all">Cancel</button>
+          <button onClick={handleSave} disabled={!desc.trim() || !amount || !date}
+            className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-semibold text-sm transition-all">Add</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── GOAL EDITOR MODAL ─────────────────────────────────────────────────────────
 function GoalEditorModal({ goal, onSave, onDelete, onClose }) {
   const isNew = !goal.id;
   const [name,    setName]    = useState(goal.name    ?? "");
   const [target,  setTarget]  = useState(goal.target  ?? 500);
-  const [date,    setDate]    = useState(goal.date    ?? "");
+  const [saved,   setSaved]   = useState(goal.saved   ?? 0);
+  const [date,    setDate]    = useState(() => {
+    const d = goal.date ?? "";
+    if (d.includes(" ")) {
+      const MO_LIST = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const [ms, ys] = d.split(" ");
+      const mo = MO_LIST.indexOf(ms) + 1;
+      if (mo > 0 && ys) return `${ys}-${String(mo).padStart(2, "0")}`;
+    }
+    return d;
+  });
   const [iconKey, setIconKey] = useState(goal.iconKey ?? "Target");
 
   const handleSave = () => {
     if (!name.trim() || target <= 0) return;
-    onSave({ id: goal.id ?? Date.now(), name: name.trim(), target: Number(target), date, iconKey, saved: goal.saved ?? 0 });
+    const clampedSaved = Math.min(Math.max(0, Number(saved)), Number(target));
+    onSave({ id: goal.id ?? Date.now(), name: name.trim(), target: Number(target), date, iconKey, saved: clampedSaved });
     onClose();
   };
 
@@ -600,16 +683,23 @@ function GoalEditorModal({ goal, onSave, onDelete, onClose }) {
           </div>
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
             <div>
-              <label className="text-xs text-gray-400 mb-1.5 block">Target amount (£)</label>
+              <label className="text-xs text-gray-400 mb-1.5 block">Target amount</label>
               <input type="number" value={target} onChange={e => setTarget(e.target.value)} min="1"
                 className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
             </div>
             <div>
               <label className="text-xs text-gray-400 mb-1.5 block">Target date</label>
-              <input type="month" value={date.length === 8 ? "" : date} onChange={e => setDate(e.target.value)}
+              <input type="month" value={date} onChange={e => setDate(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
             </div>
           </div>
+          {!isNew && (
+            <div>
+              <label className="text-xs text-gray-400 mb-1.5 block">Amount saved so far (correct if needed)</label>
+              <input type="number" value={saved} onChange={e => setSaved(e.target.value)} min="0" max={target}
+                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
+            </div>
+          )}
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block">Icon</label>
             <div className="flex flex-wrap gap-2">
@@ -651,6 +741,7 @@ export default function SpendingTracker() {
   const [search, setSearch]       = useState("");
   const [filterCat, setFilterCat] = useState("All");
   const [filterDir, setFilterDir] = useState("All");
+  const [filterMonth, setFilterMonth] = useState("All");
   const [fixedCosts, setFixedCosts]         = useState(DEFAULT_FIXED);
   const [varCosts, setVarCosts]             = useState(DEFAULT_VAR);
   const [monthlyIncome, setMonthlyIncome]   = useState(2200);
@@ -692,22 +783,38 @@ export default function SpendingTracker() {
   const [bannerDismissed, setBannerDismissed] = useState(() => !!localStorage.getItem("bannerDismissed"));
   const [importSuccess, setImportSuccess]     = useState(false);
   const [csvError, setCsvError]               = useState(null);
+  const [manualTxs, setManualTxs]             = useState(() => {
+    try { return JSON.parse(localStorage.getItem("manualTxs") ?? "[]"); } catch { return []; }
+  });
+  const [editingTxKey, setEditingTxKey]       = useState(null);
+  const [showQuickAdd, setShowQuickAdd]       = useState(false);
+  const [healthExpanded, setHealthExpanded]   = useState(false);
   const csvInputRef                         = useRef(null);
   const overviewRef                         = useRef(null);
 
   // ── ACTIVE DATA — shadows module-level defaults when CSV is loaded ─────────
-  const MONTHLY_SUMMARY  = importedData?.summary ?? DEFAULT_MONTHLY_SUMMARY;
+  const MONTHLY_SUMMARY  = useMemo(() => {
+    const base = importedData?.summary ?? DEFAULT_MONTHLY_SUMMARY;
+    if (manualTxs.length === 0) return base;
+    return base.map(mo => {
+      const mTxs = manualTxs.filter(t => t.month === mo.label);
+      if (!mTxs.length) return mo;
+      const incDelta = mTxs.filter(t => t.dir === "in").reduce((s, t) => s + t.amount, 0);
+      const outDelta = mTxs.filter(t => t.dir === "out").reduce((s, t) => s + t.amount, 0);
+      return { ...mo, income: mo.income + incDelta, spending: mo.spending + outDelta, net: mo.net + incDelta - outDelta };
+    });
+  }, [importedData, manualTxs]);
   const INCOME_BREAKDOWN = importedData?.income  ?? DEFAULT_INCOME_BREAKDOWN;
   const ALL_TRANSACTIONS = useMemo(() => {
-    const raw = importedData?.transactions ?? DEFAULT_ALL_TRANSACTIONS;
+    const raw = [...(importedData?.transactions ?? DEFAULT_ALL_TRANSACTIONS), ...manualTxs];
     if (Object.keys(txCatOverrides).length === 0) return raw;
     return raw.map(tx => {
       const key = `${tx.date}:${tx.desc}`;
       return txCatOverrides[key] ? { ...tx, cat: txCatOverrides[key] } : tx;
     });
-  }, [importedData, txCatOverrides]);
+  }, [importedData, txCatOverrides, manualTxs]);
   const MONTHLY_CATEGORIES = useMemo(() => {
-    if (Object.keys(txCatOverrides).length === 0) {
+    if (Object.keys(txCatOverrides).length === 0 && manualTxs.length === 0) {
       return importedData?.categories ?? DEFAULT_MONTHLY_CATEGORIES;
     }
     const result = {};
@@ -717,13 +824,25 @@ export default function SpendingTracker() {
       result[tx.month][tx.cat] = (result[tx.month][tx.cat] || 0) + Math.round(tx.amount * 100) / 100;
     });
     return result;
-  }, [ALL_TRANSACTIONS, importedData, txCatOverrides]);
+  }, [ALL_TRANSACTIONS, importedData, txCatOverrides, manualTxs]);
   const MONTHS             = MONTHLY_SUMMARY.map(m => m.label);
 
-  // ── PERSIST GOALS ────────────────────────────────────────────────────────────
+  // ── PERSIST GOALS & MANUAL TXS ───────────────────────────────────────────────
+  useEffect(() => { localStorage.setItem("goals", JSON.stringify(goals)); }, [goals]);
+  useEffect(() => { try { localStorage.setItem("manualTxs", JSON.stringify(manualTxs)); } catch {} }, [manualTxs]);
+
+  // ── AUTO-DISMISS IMPORT SUCCESS BANNER ───────────────────────────────────────
   useEffect(() => {
-    localStorage.setItem("goals", JSON.stringify(goals));
-  }, [goals]);
+    if (!importSuccess) return;
+    const t = setTimeout(() => setImportSuccess(false), 6000);
+    return () => clearTimeout(t);
+  }, [importSuccess]);
+
+  // ── SYNC filterMonth WITH selMonth IN BREAKDOWN TAB ─────────────────────────
+  useEffect(() => {
+    if (tab === "breakdown") setFilterMonth(selMonth);
+    else setFilterMonth("All");
+  }, [tab, selMonth]);
 
   // ── SYNC selMonth WHEN DATA CHANGES ────────────────────────────────────────
   useEffect(() => {
@@ -773,13 +892,15 @@ export default function SpendingTracker() {
   const runway = currentBalance / avgSpend;
   const leftToSpend = currentBalance - totalFixed;
   const ageOfMoney = Math.round(currentBalance / (avgSpend / 30));
+  const savingsRate = historicIncome > 0 ? Math.round(((historicIncome - historicSpend) / historicIncome) * 100) : 0;
   const worstMonth = [...MONTHLY_SUMMARY].sort((a,b) => a.net - b.net)[0];
   const bestMonth  = [...MONTHLY_SUMMARY].sort((a,b) => b.net - a.net)[0];
 
   const monthOverMonthDeltas = useMemo(() => {
     const months = MONTHLY_SUMMARY.map(m => m.label);
-    const latest = months[months.length - 1];   // Jan '26
-    const prev   = months[months.length - 2];   // Dec '25
+    if (months.length < 2) return {};
+    const latest = months[months.length - 1];
+    const prev   = months[months.length - 2];
     const latestCats = MONTHLY_CATEGORIES[latest] || {};
     const prevCats   = MONTHLY_CATEGORIES[prev]   || {};
     const deltas = {};
@@ -789,6 +910,72 @@ export default function SpendingTracker() {
     });
     return deltas;
   }, [MONTHLY_CATEGORIES]);
+
+  // ── 3-MONTH CATEGORY TREND (up / flat / down) ────────────────────────────
+  const categoryTrends = useMemo(() => {
+    const months = MONTHLY_SUMMARY.map(m => m.label);
+    if (months.length < 3) return {};
+    const [m1, m2, m3] = months.slice(-3);
+    const trends = {};
+    const allCatKeys = new Set([
+      ...Object.keys(MONTHLY_CATEGORIES[m1] || {}),
+      ...Object.keys(MONTHLY_CATEGORIES[m2] || {}),
+      ...Object.keys(MONTHLY_CATEGORIES[m3] || {}),
+    ]);
+    allCatKeys.forEach(cat => {
+      const v1 = MONTHLY_CATEGORIES[m1]?.[cat] || 0;
+      const v2 = MONTHLY_CATEGORIES[m2]?.[cat] || 0;
+      const v3 = MONTHLY_CATEGORIES[m3]?.[cat] || 0;
+      // Linear slope over 3 points (simple: end - start)
+      const slope = v3 - v1;
+      const avg = (v1 + v2 + v3) / 3;
+      const threshold = avg * 0.12; // >12% swing = directional
+      trends[cat] = slope > threshold ? "up" : slope < -threshold ? "down" : "flat";
+    });
+    return trends;
+  }, [MONTHLY_SUMMARY, MONTHLY_CATEGORIES]);
+
+  // ── BUDGET PACE WARNINGS (80%+ spent by mid-month) ───────────────────────
+  const budgetPaceWarnings = useMemo(() => {
+    if (!selMonth) return [];
+    // Build budgetMap from cost items
+    const budgetMap = {};
+    [...fixedCosts, ...varCosts].forEach(c => {
+      if (!c.amount) return;
+      const matched = ALL_CAT_NAMES.find(cat =>
+        cat.toLowerCase().includes(c.label.toLowerCase().split(" (")[0]) ||
+        c.label.toLowerCase().includes(cat.toLowerCase())
+      );
+      if (matched) budgetMap[matched] = (budgetMap[matched] || 0) + c.amount;
+    });
+    if (Object.keys(budgetMap).length === 0) return [];
+
+    // Transactions in selected month, sorted by date
+    const monthTxs = ALL_TRANSACTIONS
+      .filter(t => t.dir === "out" && t.month === selMonth)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (monthTxs.length === 0) return [];
+
+    // What day is mid-month? Use day 15
+    const midDay = 15;
+    const warnings = [];
+
+    Object.entries(budgetMap).forEach(([cat, budget]) => {
+      const catTxs = monthTxs.filter(t => t.cat === cat);
+      if (catTxs.length === 0) return;
+      // Spending up to and including day 15
+      const spentByMid = catTxs
+        .filter(t => parseInt(t.date.split("-")[2]) <= midDay)
+        .reduce((s, t) => s + t.amount, 0);
+      const pctByMid = spentByMid / budget;
+      if (pctByMid >= 0.8) {
+        const totalSpent = catTxs.reduce((s, t) => s + t.amount, 0);
+        warnings.push({ cat, budget, spentByMid, totalSpent, pctByMid });
+      }
+    });
+    return warnings.sort((a, b) => b.pctByMid - a.pctByMid);
+  }, [selMonth, fixedCosts, varCosts, ALL_TRANSACTIONS, ALL_CAT_NAMES]);
 
   const spendingDNA = useMemo(() => {
     const eatOut   = catTotals.find(([c]) => c === "Eating Out & Cafes")?.[1] || 0;
@@ -829,16 +1016,6 @@ export default function SpendingTracker() {
     return Math.round((bufferScore + cvScore) / 2);
   }, [incomeVariance, currentBalance]);
 
-  const financialHealthScore = useMemo(() => {
-    const positiveMonths = MONTHLY_SUMMARY.filter(m => m.net > 0).length;
-    const positiveScore  = (positiveMonths / MONTHLY_SUMMARY.length) * 100;
-    const runwayScore    = Math.min(runway * 50, 100);
-    const totalSubAnnual = SUBSCRIPTIONS.reduce((s, sub) => s + sub.annual, 0);
-    const subPercentage  = (totalSubAnnual / historicIncome) * 100;
-    const subScore       = Math.max(0, 100 - (subPercentage * 2));
-    return Math.round((positiveScore + runwayScore + subScore) / 3);
-  }, [runway, historicIncome, importedData]);
-
   // ── FORECAST ─────────────────────────────────────────────────────────────
   const lastEntry    = MONTHLY_SUMMARY[MONTHLY_SUMMARY.length - 1];
   const lastMoIdx    = lastEntry ? MO_ABBR.indexOf(lastEntry.label.split(" ")[0]) : 0;
@@ -851,7 +1028,6 @@ export default function SpendingTracker() {
     return Array.from({ length: horizonMonths }, (_, idx) => {
       const mIdx = (fcStartIdx + idx) % 12;
       const yr   = fcStartYear + Math.floor((fcStartIdx + idx) / 12);
-      const transportTarget = varCosts.find(c => c.id==="transport")?.amount || 172.50;
       const adjusted = totalProjected;
       balance = balance + monthlyIncome - adjusted;
       return {
@@ -870,85 +1046,255 @@ export default function SpendingTracker() {
   ];
 
   // ── PURCHASE IMPACT SIMULATOR ─────────────────────────────────────────────
-  // This is the full month-by-month simulation of what happens if you make a purchase.
-  // It generates two parallel balance lines: baseline (no purchase) vs with-purchase.
+  // Uses forecastData months so it works for any dataset end date, not just Jan 2026.
   const purchaseSimulation = useMemo(() => {
     const amt = parseFloat(affordabilityAmount);
-    if (!amt || isNaN(amt) || amt <= 0 || !affordabilityDate) return null;
+    if (!amt || isNaN(amt) || amt <= 0 || !affordabilityDate || forecastData.length === 0) return null;
 
     const parts = affordabilityDate.split("-");
     if (parts.length < 2) return null;
-    const purchaseYear  = parseInt(parts[0]);
-    const purchaseMonthNum = parseInt(parts[1]); // 1-based
-
+    const purchaseYear     = parseInt(parts[0]);
+    const purchaseMonthNum = parseInt(parts[1]);
     if (purchaseMonthNum < 1 || purchaseMonthNum > 12) return null;
 
-    const monthlySpend    = totalProjected;
-    const monthlyNet      = monthlyIncome - monthlySpend;
+    const purchaseLabel = `${MO_ABBR[purchaseMonthNum - 1]} '${String(purchaseYear).slice(2)}`;
+    const purchaseIdx   = forecastData.findIndex(d => d.month === purchaseLabel);
+    if (purchaseIdx === -1) return null;
 
     let balBase = currentBalance;
     let balWith = currentBalance;
+    // Spread the cost evenly across `spreadMonths` months starting at purchaseIdx
+    const monthlyCharge = amt / spreadMonths;
 
-    const allMonths = FORECAST_MONTHS.map((m, idx) => {
-      const mNum = FORECAST_MONTH_NUMS[idx];
-      balBase += monthlyNet;
-
-      const isPurchaseMonth = (purchaseYear === 2026 && purchaseMonthNum === mNum);
-      if (isPurchaseMonth) {
-        balWith += monthlyNet - amt;
-      } else {
-        balWith += monthlyNet;
-      }
-
+    const allMonths = forecastData.map((d, idx) => {
+      balBase += d.Net;
+      const isSpreadMonth = idx >= purchaseIdx && idx < purchaseIdx + spreadMonths;
+      balWith += isSpreadMonth ? d.Net - monthlyCharge : d.Net;
       return {
-        month: `${m} '26`,
+        month: d.month,
         "Without Purchase": Math.round(balBase),
         "With Purchase":    Math.round(balWith),
-        isPurchase: isPurchaseMonth,
+        isPurchase: idx === purchaseIdx,
       };
     });
 
-    // Show 1 month before purchase and up to 5 months after
-    const purchaseIdx = FORECAST_MONTH_NUMS.indexOf(purchaseMonthNum);
-    const showFrom    = Math.max(0, purchaseIdx - 1);
-    const showTo      = Math.min(FORECAST_MONTHS.length, purchaseIdx + 6);
-    const simMonths   = allMonths.slice(showFrom, showTo);
+    // Extend window to cover the full spread + 2 months after
+    const showFrom = Math.max(0, purchaseIdx - 1);
+    const showTo   = Math.min(forecastData.length, purchaseIdx + spreadMonths + 2);
+    const simMonths = allMonths.slice(showFrom, showTo);
 
     const lowestWithPurchase = Math.min(...allMonths.map(m => m["With Purchase"]));
-    const purchaseMonthLabel = `${FORECAST_MONTHS[purchaseIdx]} '26`;
-
-    // 3-tier verdict
     const verdict =
       lowestWithPurchase >= 500 ? "COMFORTABLE" :
       lowestWithPurchase >= 0   ? "TIGHT"        : "SHORTFALL";
 
-    // When does balance rise back above £500 after the purchase dip?
-    const recoversAt = allMonths.slice(purchaseIdx + 1).find(m => m["With Purchase"] >= 500);
-
-    // If we spread cost over spreadMonths, what's the extra per month?
-    const spreadMonthlyExtra = (amt / spreadMonths).toFixed(2);
+    const recoversAt = allMonths.slice(purchaseIdx + spreadMonths).find(m => m["With Purchase"] >= 500);
+    const spreadMonthlyExtra = monthlyCharge.toFixed(2);
+    const monthlyNetVal = forecastData[0].Net;
 
     return {
       simMonths,
       amt,
-      monthlyNet: Math.round(monthlyNet),
+      monthlyNet: Math.round(monthlyNetVal),
       lowestWithPurchase,
       verdict,
-      purchaseMonthLabel,
+      purchaseMonthLabel: purchaseLabel,
       recoversAt: recoversAt?.month || null,
       spreadMonthlyExtra,
-      balanceAfterPurchase: Math.round(currentBalance + monthlyNet - amt),
+      balanceAfterPurchase: Math.round(currentBalance + monthlyNetVal - amt),
     };
-  }, [affordabilityAmount, affordabilityDate, totalProjected, monthlyIncome, varCosts, spreadMonths, currentBalance]);
+  }, [affordabilityAmount, affordabilityDate, forecastData, spreadMonths, currentBalance]);
+
+  // ── AUTO-DETECT RECURRING SUBSCRIPTIONS FROM REAL DATA ──────────────────
+  const detectedSubs = useMemo(() => {
+    if (!importedData) return null;
+    const subTxs = ALL_TRANSACTIONS.filter(t => t.dir === "out" && t.cat === "Subscriptions");
+    // Normalise description: lowercase, strip trailing numbers/punctuation/parentheticals
+    const normaliseDesc = d => d.toLowerCase().replace(/\s*\(.*?\)/g, "").replace(/\s+\d+$/, "").trim();
+    const groups = {};
+    subTxs.forEach(tx => {
+      const key = normaliseDesc(tx.desc);
+      if (!groups[key]) groups[key] = { desc: tx.desc, months: new Set(), amounts: [] };
+      groups[key].months.add(tx.month);
+      groups[key].amounts.push(tx.amount);
+    });
+    return Object.values(groups)
+      .filter(g => g.months.size >= 2) // must appear in 2+ months to be "recurring"
+      .map(g => {
+        const sorted = [...g.amounts].sort((a, b) => a - b);
+        const median = sorted[Math.floor(sorted.length / 2)];
+        return { name: g.desc, monthly: Math.round(median * 100) / 100, annual: Math.round(median * 12 * 100) / 100, icon: Radio, optional: true };
+      })
+      .sort((a, b) => b.monthly - a.monthly);
+  }, [importedData, ALL_TRANSACTIONS]);
+
+  // Active subscription list: real data when available, hardcoded for demo
+  const activeSubs = detectedSubs ?? SUBSCRIPTIONS;
 
   // ── SUBSCRIPTION SAVINGS ──────────────────────────────────────────────────
   const cancelledAnnualSavings = useMemo(() => {
-    return SUBSCRIPTIONS.reduce((total, sub, idx) => {
+    return activeSubs.reduce((total, sub, idx) => {
       return subToggles[idx] ? total + sub.annual : total;
     }, 0);
-  }, [subToggles]);
+  }, [subToggles, activeSubs]);
 
-  const totalSubAnnual = SUBSCRIPTIONS.reduce((s, sub) => s + sub.annual, 0);
+  const totalSubAnnual = activeSubs.reduce((s, sub) => s + sub.annual, 0);
+
+  const financialHealthScore = useMemo(() => {
+    const positiveMonths = MONTHLY_SUMMARY.filter(m => m.net > 0).length;
+    const positiveScore  = (positiveMonths / MONTHLY_SUMMARY.length) * 100;
+    const runwayScore    = Math.min(runway * 50, 100);
+    const subAnnual      = activeSubs.reduce((s, sub) => s + sub.annual, 0);
+    const subPercentage  = (subAnnual / historicIncome) * 100;
+    const subScore       = Math.max(0, 100 - (subPercentage * 2));
+    return Math.round((positiveScore + runwayScore + subScore) / 3);
+  }, [runway, historicIncome, activeSubs, MONTHLY_SUMMARY]);
+
+  // ── INCOME NEEDED TO HIT ALL GOALS ON TIME ───────────────────────────────
+  const incomeNeededForGoals = useMemo(() => {
+    const MO_LIST = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const now = new Date();
+    const totalMonthlyGoalContrib = goals.reduce((sum, goal) => {
+      const stillNeeded = Math.max(0, goal.target - goal.saved);
+      if (stillNeeded <= 0) return sum;
+      let monthIdx = -1, yearNum = 0;
+      if (goal.date?.includes("-")) {
+        const [y, m] = goal.date.split("-");
+        monthIdx = parseInt(m) - 1; yearNum = parseInt(y);
+      } else if (goal.date?.includes(" ")) {
+        const [ms, ys] = goal.date.split(" ");
+        monthIdx = MO_LIST.indexOf(ms); yearNum = parseInt(ys);
+      }
+      const monthsAway = monthIdx === -1 ? 0 : Math.max(1, (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth()));
+      return sum + (stillNeeded / monthsAway);
+    }, 0);
+    return Math.ceil(totalProjected + totalMonthlyGoalContrib);
+  }, [goals, totalProjected]);
+
+  // ── PAYDAY PROTOCOL ──────────────────────────────────────────────────────
+  const paydayProtocol = useMemo(() => {
+    const MO_LIST = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const now = new Date();
+    const transfers = goals.map(goal => {
+      const stillNeeded = Math.max(0, goal.target - goal.saved);
+      if (stillNeeded <= 0) return null;
+      let monthIdx = -1, yearNum = 0;
+      if (goal.date?.includes("-")) {
+        const [y, m] = goal.date.split("-");
+        monthIdx = parseInt(m) - 1; yearNum = parseInt(y);
+      } else if (goal.date?.includes(" ")) {
+        const [ms, ys] = goal.date.split(" ");
+        monthIdx = MO_LIST.indexOf(ms); yearNum = parseInt(ys);
+      }
+      const monthsAway = monthIdx === -1 ? 12 : Math.max(1, (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth()));
+      return { name: goal.name, iconKey: goal.iconKey, monthly: Math.ceil(stillNeeded / monthsAway) };
+    }).filter(Boolean);
+    const totalGoalContrib = transfers.reduce((s, t) => s + t.monthly, 0);
+    const remaining = Math.max(0, monthlyIncome - totalProjected - totalGoalContrib);
+    const weekly = Math.round(remaining / 4.33);
+    return { transfers, totalGoalContrib, remaining, weekly };
+  }, [goals, monthlyIncome, totalProjected]);
+
+  // ── THIS MONTH'S ACTION PLAN ──────────────────────────────────────────────
+  const monthlyPriorities = useMemo(() => {
+    const MO_LIST = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const now = new Date();
+    const items = [];
+
+    // 1. Budget pace alerts → urgent overspending
+    budgetPaceWarnings.slice(0, 2).forEach(w => {
+      items.push({
+        urgency: w.pctByMid >= 1.0 ? "red" : "amber",
+        title: `Rein in ${w.cat}`,
+        body: `${Math.round(w.pctByMid * 100)}% of your ${fmt(w.budget)} budget was spent in the first half of the month.`,
+      });
+    });
+
+    // 2. Goals behind pace
+    goals.forEach(goal => {
+      const stillNeeded = Math.max(0, goal.target - goal.saved);
+      if (stillNeeded <= 0) return;
+      let monthIdx = -1, yearNum = 0;
+      if (goal.date?.includes("-")) {
+        const [y, m] = goal.date.split("-");
+        monthIdx = parseInt(m) - 1; yearNum = parseInt(y);
+      } else if (goal.date?.includes(" ")) {
+        const [ms, ys] = goal.date.split(" ");
+        monthIdx = MO_LIST.indexOf(ms); yearNum = parseInt(ys);
+      }
+      const monthsAway = monthIdx === -1 ? 0 : Math.max(1, (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth()));
+      const monthlyNeeded = stillNeeded / monthsAway;
+      if (monthlyNeeded > 0 && monthlyNeeded > projectedNet * 0.4) {
+        items.push({
+          urgency: monthlyNeeded > projectedNet ? "red" : "amber",
+          title: `Save ${fmt(Math.ceil(monthlyNeeded))}/mo → ${goal.name}`,
+          body: `${monthsAway} month${monthsAway !== 1 ? "s" : ""} to deadline · ${fmt(stillNeeded)} still needed.`,
+        });
+      }
+    });
+
+    // 3. Marked subscriptions to cancel
+    const pendingCancels = activeSubs.filter((s, i) => s.optional && subToggles[i]);
+    if (pendingCancels.length > 0) {
+      items.push({
+        urgency: "green",
+        title: `Act on ${pendingCancels.length} subscription${pendingCancels.length > 1 ? "s" : ""} marked for cancellation`,
+        body: `Saves ${fmt(pendingCancels.reduce((s, sub) => s + sub.annual, 0) / 12)}/mo (${fmt(pendingCancels.reduce((s, sub) => s + sub.annual, 0))}/yr).`,
+      });
+    }
+
+    // 4. Healthy fallback
+    if (items.length === 0) {
+      if (projectedNet > 0) {
+        items.push({ urgency: "green", title: "You're on track", body: `Projected surplus of ${fmt(projectedNet)}/mo. Consider boosting a goal or topping up your emergency fund.` });
+      } else {
+        items.push({ urgency: "amber", title: "Review your spending plan", body: "Set income and budget targets in the Plan tab to unlock personalised recommendations." });
+      }
+    }
+
+    return items.slice(0, 3);
+  }, [budgetPaceWarnings, goals, projectedNet, activeSubs, subToggles, fmt]);
+
+  // ── DYNAMIC INSIGHTS FROM REAL DATA ──────────────────────────────────────
+  const dynamicInsights = useMemo(() => {
+    if (!importedData || MONTHLY_SUMMARY.length === 0) return null;
+    const nets = MONTHLY_SUMMARY.map(m => m.net);
+    const incomes = MONTHLY_SUMMARY.map(m => m.income);
+    const maxInc = Math.max(...incomes);
+    const minInc = Math.min(...incomes);
+    const incomeVolatility = maxInc > 0 ? Math.round(((maxInc - minInc) / maxInc) * 100) : 0;
+
+    // Biggest spending category overall
+    const catTotals = {};
+    ALL_TRANSACTIONS.filter(t => t.dir === "out").forEach(t => {
+      catTotals[t.cat] = (catTotals[t.cat] || 0) + t.amount;
+    });
+    const biggestCat = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
+    const otherRatio = catTotals["Other"]
+      ? Math.round((catTotals["Other"] / Object.values(catTotals).reduce((s, v) => s + v, 0)) * 100)
+      : 0;
+
+    const totalSpend = Object.values(catTotals).reduce((s, v) => s + v, 0);
+    const positiveCount = nets.filter(n => n > 0).length;
+
+    const cards = [];
+
+    if (bestMonth) cards.push({ icon:TrendingUp, color:"text-emerald-400", title:"Best month", body:`${bestMonth.label} was your strongest month — net +${fmt(bestMonth.net)}. That's the benchmark to aim for.` });
+    if (worstMonth) cards.push({ icon:AlertTriangle, color:"text-amber-400", title:"Hardest month", body:`${worstMonth.label} had a ${fmt(Math.abs(worstMonth.net))} deficit (${fmt(worstMonth.income)} in vs ${fmt(worstMonth.spending)} out). Watch similar patterns.` });
+
+    if (biggestCat) cards.push({ icon:Package, color:"text-purple-400", title:`${biggestCat[0]} dominates`, body:`${biggestCat[0]} is your largest expense category at ${fmt(biggestCat[1])} total — ${Math.round((biggestCat[1]/totalSpend)*100)}% of all spending.` });
+
+    if (incomeVolatility > 20) cards.push({ icon:Stethoscope, color:"text-sky-400", title:"Income swings", body:`Your income varied by ${incomeVolatility}% between your lowest and highest months. Building a buffer covers the lean periods.` });
+    else cards.push({ icon:Stethoscope, color:"text-sky-400", title:"Consistent income", body:`Income variance is only ${incomeVolatility}% — relatively stable across ${MONTHLY_SUMMARY.length} months of data.` });
+
+    cards.push({ icon:Dumbbell, color:"text-orange-400", title:"Subscriptions cost", body:`${fmt(totalSubAnnual)} per year in subscriptions. Toggle any in Goals & Health to see potential savings.` });
+
+    if (otherRatio > 10) cards.push({ icon:Search, color:"text-gray-400", title:`${otherRatio}% uncategorised`, body:`${fmt(catTotals["Other"])} sits in "Other". Editing transaction descriptions helps auto-categorisation and gives you a more accurate picture.` });
+
+    cards.push({ icon:TrendingDown, color:"text-indigo-400", title:"Positive months", body:`${positiveCount} of ${MONTHLY_SUMMARY.length} months were cash-flow positive. ${positiveCount === MONTHLY_SUMMARY.length ? "Excellent discipline!" : `${MONTHLY_SUMMARY.length - positiveCount} deficit month${MONTHLY_SUMMARY.length - positiveCount > 1 ? "s" : ""} to investigate.`}` });
+
+    return cards;
+  }, [importedData, MONTHLY_SUMMARY, ALL_TRANSACTIONS, bestMonth, worstMonth, totalSubAnnual, fmt]);
 
   const selCats = useMemo(() =>
     Object.entries(MONTHLY_CATEGORIES[selMonth] || {}).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
@@ -962,8 +1308,11 @@ export default function SpendingTracker() {
 
   const filteredTxs = useMemo(() => ALL_TRANSACTIONS.filter(t => {
     const ms = t.desc.toLowerCase().includes(search.toLowerCase()) || t.cat.toLowerCase().includes(search.toLowerCase());
-    return ms && (filterCat === "All" || t.cat === filterCat) && (filterDir === "All" || t.dir === filterDir);
-  }), [search, filterCat, filterDir, ALL_TRANSACTIONS]);
+    return ms
+      && (filterCat   === "All" || t.cat   === filterCat)
+      && (filterDir   === "All" || t.dir   === filterDir)
+      && (filterMonth === "All" || t.month === filterMonth);
+  }), [search, filterCat, filterDir, filterMonth, ALL_TRANSACTIONS]);
 
   // ── WEEKLY BREAKDOWN ─────────────────────────────────────────────────────
   const weeklyBreakdown = useMemo(() => {
@@ -992,15 +1341,12 @@ export default function SpendingTracker() {
     const cats = MONTHLY_CATEGORIES[lastMo.label] || {};
     const budgetMap = {};
     [...fixedCosts, ...varCosts].forEach(c => {
-      // Match budget items to category names heuristically
-      if (c.id === "rent")       budgetMap["Rent"] = c.amount;
-      if (c.id === "groceries")  budgetMap["Groceries"] = c.amount;
-      if (c.id === "transport")  budgetMap["Transport"] = c.amount;
-      if (c.id === "eatingout")  budgetMap["Eating Out & Cafes"] = c.amount;
-      if (c.id === "entertain")  budgetMap["Entertainment & Nights Out"] = c.amount;
-      if (c.id === "shopping")   budgetMap["Shopping"] = c.amount;
-      if (c.id === "gym")        budgetMap["Gym & Fitness"] = c.amount;
-      if (c.id === "phone")      budgetMap["Phone Bill"] = c.amount;
+      if (!c.amount) return;
+      const matched = ALL_CAT_NAMES.find(cat =>
+        cat.toLowerCase().includes(c.label.toLowerCase().split(" (")[0]) ||
+        c.label.toLowerCase().includes(cat.toLowerCase())
+      );
+      if (matched) budgetMap[matched] = (budgetMap[matched] || 0) + c.amount;
     });
     const comparisons = Object.entries(budgetMap).map(([cat, budget]) => {
       const actual = cats[cat] || 0;
@@ -1014,11 +1360,12 @@ export default function SpendingTracker() {
   const budgetPatterns = useMemo(() => {
     const budgetMap = {};
     [...fixedCosts, ...varCosts].forEach(c => {
-      if (c.id === "groceries")  budgetMap["Groceries"] = c.amount;
-      if (c.id === "transport")  budgetMap["Transport"] = c.amount;
-      if (c.id === "eatingout")  budgetMap["Eating Out & Cafes"] = c.amount;
-      if (c.id === "entertain")  budgetMap["Entertainment & Nights Out"] = c.amount;
-      if (c.id === "shopping")   budgetMap["Shopping"] = c.amount;
+      if (!c.amount) return;
+      const matched = ALL_CAT_NAMES.find(cat =>
+        cat.toLowerCase().includes(c.label.toLowerCase().split(" (")[0]) ||
+        c.label.toLowerCase().includes(cat.toLowerCase())
+      );
+      if (matched) budgetMap[matched] = (budgetMap[matched] || 0) + c.amount;
     });
     return Object.entries(budgetMap).map(([cat, budget]) => {
       let monthsOver = 0, total = 0, totalActual = 0;
@@ -1046,6 +1393,12 @@ export default function SpendingTracker() {
   }, [MONTHLY_CATEGORIES, MONTHLY_SUMMARY]);
   const updateFixed  = (id, v) => setFixedCosts(p => p.map(c => c.id===id ? {...c, amount:Number(v)} : c));
   const updateVar    = (id, v) => setVarCosts(p => p.map(c => c.id===id ? {...c, amount:Number(v)} : c));
+  const renameFixed  = (id, v) => setFixedCosts(p => p.map(c => c.id===id ? {...c, label:v} : c));
+  const renameVar    = (id, v) => setVarCosts(p => p.map(c => c.id===id ? {...c, label:v} : c));
+  const removeFixed  = (id)    => setFixedCosts(p => p.filter(c => c.id !== id));
+  const removeVar    = (id)    => setVarCosts(p => p.filter(c => c.id !== id));
+  const addFixed     = ()      => setFixedCosts(p => [...p, { id:`f${Date.now()}`, label:"New item", amount:0, icon:Package }]);
+  const addVar       = ()      => setVarCosts(p => [...p, { id:`v${Date.now()}`, label:"New item", amount:0, icon:Package }]);
   const bCol = b => b > 1000 ? "#22c55e" : b > 300 ? "#f59e0b" : "#ef4444";
 
   // ── EXPORT PNG ───────────────────────────────────────────────────────────
@@ -1108,11 +1461,19 @@ export default function SpendingTracker() {
     try { localStorage.setItem("catOverrides", JSON.stringify(newOverrides)); } catch {}
   };
 
+  const updateTxCatInline = (tx, newCat) => {
+    const key = `${tx.date}:${tx.desc}`;
+    const newOverrides = { ...txCatOverrides, [key]: newCat };
+    setTxCatOverrides(newOverrides);
+    try { localStorage.setItem("catOverrides", JSON.stringify(newOverrides)); } catch {}
+    setEditingTxKey(null);
+  };
+
   const TABS = [
-    { id:"dashboard",  label:"Dashboard",      Icon: BarChart3  },
-    { id:"plan",       label:"Plan",           Icon: TrendingUp },
-    { id:"breakdown",  label:"Breakdown",      Icon: Calendar   },
-    { id:"health",     label:"Goals & Health", Icon: Target     },
+    { id:"dashboard",  label:"Home",     Icon: BarChart3  },
+    { id:"breakdown",  label:"Months",   Icon: Calendar   },
+    { id:"plan",       label:"Forecast", Icon: TrendingUp },
+    { id:"health",     label:"Goals",    Icon: Target     },
   ];
 
   // Verdict colours helper
@@ -1130,10 +1491,10 @@ export default function SpendingTracker() {
           <Wallet size={11} className="text-white/60"/>
           <span className="text-xs text-white/70 font-medium uppercase tracking-wide">Balance</span>
         </div>
-        <div className="text-2xl font-bold text-white"><AnimatedNumber value={currentBalance}/></div>
+        <div className="text-2xl font-bold text-white"><AnimatedNumber value={currentBalance} format={fmt}/></div>
         <div className="flex items-center gap-1 mt-0.5">
           <Zap size={10} className="text-emerald-300"/>
-          <span className="text-xs text-emerald-300"><AnimatedNumber value={leftToSpend} format={n => `£${Math.round(n)}`}/> free</span>
+          <span className="text-xs text-emerald-300"><AnimatedNumber value={leftToSpend} format={n => `${sym}${Math.round(n)}`}/> free</span>
         </div>
       </div>
 
@@ -1214,10 +1575,11 @@ export default function SpendingTracker() {
             initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}}
             transition={{duration:0.18}} className="space-y-5">
 
+            {/* ── WELCOME BANNER ── */}
             {!importedData && !bannerDismissed && (
               <div className="bg-gradient-to-br from-indigo-950 to-purple-950 border border-indigo-700/50 rounded-2xl p-6 shadow-xl">
                 <h2 className="text-xl font-bold text-white mb-1">Welcome to Spending Tracker</h2>
-                <p className="text-gray-400 text-sm mb-5">Visualise your real bank spending — import a CSV and instantly see where your money goes, forecast your balance, and track goals.</p>
+                <p className="text-gray-400 text-sm mb-5">Import your bank CSV and instantly see where your money goes, forecast your balance, and track goals.</p>
                 <div className="flex items-center gap-3 mb-6 flex-wrap">
                   {[
                     { step:"1", label:"Import", sub:"Drop your bank CSV" },
@@ -1249,61 +1611,73 @@ export default function SpendingTracker() {
               </div>
             )}
 
-            {/* ── LEFT TO SPEND + COMMITTED ── */}
-            <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-              {/* Hero: Left to Spend */}
-              <div className="bg-gradient-to-br from-emerald-900 to-teal-900 rounded-2xl p-5 border border-emerald-700/40 shadow-xl">
-                <div className="flex items-center gap-2 mb-1">
-                  <Zap size={14} className="text-emerald-400"/>
-                  <span className="text-emerald-300/80 text-xs font-semibold uppercase tracking-wide">Left to Spend</span>
+            {/* ── HERO: BALANCE + SAVINGS RATE ── */}
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+              <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl p-6 border border-indigo-700/40 shadow-xl">
+                <div className="text-indigo-300/70 text-xs font-semibold uppercase tracking-wide mb-2">Your Balance</div>
+                <div className="text-5xl font-black text-white mt-1"><AnimatedNumber value={currentBalance} format={fmt}/></div>
+                <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
+                  <span>{fmt(leftToSpend)} <span className="text-gray-600">discretionary</span></span>
+                  <span className="text-gray-700">·</span>
+                  <span>{fmt(totalFixed)} <span className="text-gray-600">committed</span></span>
                 </div>
-                <div className="text-4xl font-black text-white mt-2">{fmt(leftToSpend)}</div>
-                <p className="text-emerald-300/60 text-xs mt-2">Balance after all committed bills are covered</p>
               </div>
-
-              {/* Committed this month */}
-              <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-                <div className="flex items-center gap-2 mb-1">
-                  <Home size={14} className="text-indigo-400"/>
-                  <span className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Committed This Month</span>
-                </div>
-                <div className="text-4xl font-black text-indigo-400 mt-2">{fmt(totalFixed)}</div>
-                <p className="text-gray-500 text-xs mt-2">Rent + phone + subs + gym — goes out regardless</p>
-              </div>
-
-              {/* Age of Money */}
-              <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock size={14} className="text-amber-400"/>
-                  <span className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Age of Money</span>
-                </div>
-                <div className="text-4xl font-black text-amber-400 mt-2">{ageOfMoney} <span className="text-xl font-normal text-amber-400/60">days</span></div>
-                <p className="text-gray-500 text-xs mt-2">How old is the money you're spending? Healthy = 30+ days.</p>
-              </div>
+              {(() => {
+                const col = savingsRate >= 20
+                  ? { bg:"from-emerald-900 to-teal-900", border:"border-emerald-700/40", val:"text-emerald-300", note:"text-emerald-400/70", label:"On track — 20% is the benchmark" }
+                  : savingsRate >= 10
+                  ? { bg:"from-amber-900/60 to-yellow-900/60", border:"border-amber-700/40", val:"text-amber-300", note:"text-amber-400/70", label:"Growing — keep pushing toward 20%" }
+                  : { bg:"from-red-900/50 to-rose-900/50", border:"border-red-700/40", val:"text-red-300", note:"text-red-400/70", label:"Below target — review your spending" };
+                return (
+                  <div className={`bg-gradient-to-br ${col.bg} rounded-2xl p-6 border ${col.border}`}>
+                    <div className={`${col.note} text-xs font-semibold uppercase tracking-wide mb-2`}>Savings Rate</div>
+                    <div className={`text-5xl font-black ${col.val} mt-1`}>{savingsRate}<span className="text-2xl font-normal opacity-60">%</span></div>
+                    <p className={`${col.note} text-xs mt-3`}>{col.label}</p>
+                  </div>
+                );
+              })()}
             </div>
 
-            {/* ── SIMULATOR CTA (signpost to hidden feature) ── */}
-            <button onClick={() => setTab("plan")}
-              className="w-full bg-gradient-to-r from-indigo-900/60 to-purple-900/60 border border-indigo-700/50 rounded-2xl p-4 flex items-center justify-between hover:border-indigo-500 transition-all group">
-              <div className="flex items-center gap-3">
-                <div className="bg-indigo-600/30 rounded-xl p-2.5"><CreditCard size={18} className="text-indigo-400"/></div>
-                <div className="text-left">
-                  <div className="font-semibold text-white text-sm flex items-center gap-1.5"><CreditCard size={13}/> Can I afford to buy something?</div>
-                  <div className="text-gray-400 text-xs mt-0.5">Run a full month-by-month impact simulation — in the Plan tab</div>
+            {/* ── THIS MONTH'S PRIORITIES ── */}
+            <div className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-700/40 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Zap size={15} className="text-indigo-400"/>
+                  <span className="font-semibold text-sm">This Month's Priorities</span>
                 </div>
+                <span className="text-xs text-gray-500">{monthlyPriorities.length} action{monthlyPriorities.length !== 1 ? "s" : ""}</span>
               </div>
-              <ChevronRight size={18} className="text-indigo-400 group-hover:translate-x-1 transition-transform"/>
-            </button>
-
-            {/* ── OTHER CATEGORY PROMPT ── */}
-            {otherPromptMonth && (
-              <div className="bg-purple-900/30 border border-purple-700 rounded-2xl p-4 flex items-start justify-between gap-3">
-                <div className="flex gap-3 items-start">
-                  <AlertTriangle size={18} className="text-purple-400 flex-shrink-0 mt-0.5"/>
-                  <div>
-                    <div className="font-semibold text-purple-300 text-sm">"Other" is over 20% of {otherPromptMonth} spending</div>
-                    <div className="text-purple-400/70 text-xs mt-0.5">Drill down to reassign uncategorised transactions and get more accurate insights.</div>
+              <div className="space-y-2.5">
+                {monthlyPriorities.map((item, i) => (
+                  <div key={i} className={`flex items-start gap-3 rounded-xl p-3 ${
+                    item.urgency === "red"   ? "bg-red-900/30 border border-red-800/40" :
+                    item.urgency === "amber" ? "bg-amber-900/30 border border-amber-800/40" :
+                                              "bg-emerald-900/30 border border-emerald-800/40"
+                  }`}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold ${
+                      item.urgency === "red" ? "bg-red-500 text-white" : item.urgency === "amber" ? "bg-amber-500 text-black" : "bg-emerald-500 text-black"
+                    }`}>{i + 1}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-semibold text-sm ${item.urgency === "red" ? "text-red-300" : item.urgency === "amber" ? "text-amber-300" : "text-emerald-300"}`}>{item.title}</div>
+                      <div className="text-gray-400 text-xs mt-0.5 leading-relaxed">{item.body}</div>
+                    </div>
                   </div>
+                ))}
+              </div>
+              {incomeNeededForGoals > 0 && (
+                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-gray-500">
+                  <span>Min. income to hit all goals on time:</span>
+                  <span className={`font-bold text-sm ${monthlyIncome >= incomeNeededForGoals ? "text-emerald-400" : "text-amber-400"}`}>{fmt(incomeNeededForGoals)}/mo</span>
+                </div>
+              )}
+            </div>
+
+            {/* ── OTHER CATEGORY ALERT ── */}
+            {otherPromptMonth && (
+              <div className="bg-purple-900/30 border border-purple-700 rounded-2xl p-4 flex items-center justify-between gap-3">
+                <div className="flex gap-3 items-center">
+                  <AlertTriangle size={16} className="text-purple-400 flex-shrink-0"/>
+                  <p className="text-purple-300 text-sm">"Other" is over 20% of <span className="font-semibold">{otherPromptMonth}</span> spending — reassign to get accurate insights.</p>
                 </div>
                 <button onClick={() => { setTab("breakdown"); setSelMonth(otherPromptMonth); setOtherDrillMonth(otherPromptMonth); }}
                   className="text-purple-300 border border-purple-700 hover:border-purple-500 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0">
@@ -1312,193 +1686,63 @@ export default function SpendingTracker() {
               </div>
             )}
 
-            {/* ── LAST MONTH REVIEW CARD ── */}
+            {/* ── LAST MONTH SNAPSHOT ── */}
             {lastMonthReview && (
-              <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h2 className="text-base font-semibold flex items-center gap-2"><Calendar size={15} className="text-indigo-400"/> {lastMonthReview.label} Review</h2>
-                    <p className="text-gray-500 text-xs mt-0.5">{lastMonthReview.onBudget} of {lastMonthReview.total} tracked categories on budget</p>
+              <div className="bg-gray-900 rounded-2xl p-4 flex items-center justify-between gap-4 border border-gray-800">
+                <div>
+                  <div className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Calendar size={13} className="text-indigo-400"/>
+                    {lastMonthReview.label}
                   </div>
-                  <div className={`text-right px-4 py-2 rounded-xl ${lastMonthReview.net >= 0 ? "bg-emerald-900/30 border border-emerald-800" : "bg-red-900/30 border border-red-800"}`}>
-                    <div className="text-xs text-gray-500">Net</div>
-                    <div className={`text-xl font-bold ${lastMonthReview.net >= 0 ? "text-emerald-400" : "text-red-400"}`}>{lastMonthReview.net >= 0 ? "+" : ""}{fmt(lastMonthReview.net)}</div>
-                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">{lastMonthReview.onBudget} of {lastMonthReview.total} categories on budget</div>
                 </div>
-                <div className="space-y-2">
-                  {lastMonthReview.comparisons.map(({ cat, budget, actual, diff, over }) => (
-                    <div key={cat} className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: CAT_COLORS[cat] || "#6366f1"}}/>
-                      <span className="text-sm text-gray-300 flex-1">{cat}</span>
-                      <span className="text-xs text-gray-500">budget {fmt(budget)}</span>
-                      <span className={`text-sm font-semibold w-20 text-right ${over ? "text-red-400" : "text-emerald-400"}`}>{fmt(actual)}</span>
-                      <span className={`text-xs w-16 text-right ${over ? "text-red-500" : "text-emerald-500"}`}>{over ? "+" : "-"}{fmt(Math.abs(diff))}</span>
-                    </div>
-                  ))}
+                <div className={`text-2xl font-bold ${lastMonthReview.net >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                  {lastMonthReview.net >= 0 ? "+" : ""}{fmt(lastMonthReview.net)}
                 </div>
+                <button onClick={() => { setTab("breakdown"); setSelMonth(lastMonthReview.label); }}
+                  className="text-indigo-400 hover:text-indigo-300 text-xs font-semibold transition-colors whitespace-nowrap">
+                  See detail →
+                </button>
               </div>
             )}
 
-            <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-              <div className="bg-gradient-to-br from-indigo-900 to-indigo-800 rounded-2xl p-4 shadow-xl">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <span className="text-white/70 text-xs font-medium uppercase tracking-wide">Financial Health</span>
-                    <div className="text-3xl font-bold text-white mt-2">{financialHealthScore}</div>
-                    <span className="text-white/60 text-xs">out of 100</span>
-                  </div>
-                  <TrendingUp size={32} className="text-white opacity-40 mt-1"/>
-                </div>
-                <div className="w-full h-2 bg-gray-800/50 rounded-full overflow-hidden">
-                  <div className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-green-500" style={{width:`${financialHealthScore}%`}}/>
-                </div>
-              </div>
-
-              {[
-                { label:`${MONTHLY_SUMMARY.length}-Mo Total Income`,  value:historicIncome, sub:`${MONTHS[0]} – ${MONTHS[MONTHS.length-1]}`, grad:"from-green-700 to-emerald-800", icon:"↑" },
-                { label:`${MONTHLY_SUMMARY.length}-Mo Total Spending`, value:historicSpend, sub:`${MONTHS[0]} – ${MONTHS[MONTHS.length-1]}`, grad:"from-red-700 to-rose-800",     icon:"↓" },
-                { label:"Avg Monthly Spend",   value:avgSpend,       sub:`${MONTHLY_SUMMARY.length}-month average`,    grad:"from-amber-700 to-orange-800", icon:"≈" },
-              ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-br ${c.grad} rounded-2xl p-4 shadow-xl`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-white/70 text-xs font-medium uppercase tracking-wide">{c.label}</span>
-                    <span className="text-lg opacity-60">{c.icon}</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white">{fmt(c.value)}</div>
-                  <div className="text-white/50 text-xs mt-1">{c.sub}</div>
-                </div>
-              ))}
-            </div>
-
-            <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
-              <h2 className="text-base font-semibold mb-4">Monthly Income vs Spending – Full Picture</h2>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={MONTHLY_SUMMARY.map(m => ({ month:m.label, Income:m.income, Spending:m.spending, Net:m.net }))} barCategoryGap="25%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
-                  <XAxis dataKey="month" tick={{fill:"#9ca3af",fontSize:11}}/>
-                  <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
-                  <Tooltip content={<Tip/>}/>
-                  <Legend wrapperStyle={{color:"#9ca3af"}}/>
-                  <Bar dataKey="Income"   fill="#22c55e" radius={[5,5,0,0]}/>
-                  <Bar dataKey="Spending" fill="#f97316" radius={[5,5,0,0]}/>
-                </BarChart>
-              </ResponsiveContainer>
-            </motion.div>
-
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-              <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.07,duration:0.3}}>
-                <h2 className="text-base font-semibold mb-3">Account Balance (month-end)</h2>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={MONTHLY_SUMMARY.map(m => ({ month:m.label, Balance:m.balanceEnd }))}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
-                    <XAxis dataKey="month" tick={{fill:"#9ca3af",fontSize:11}}/>
-                    <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
-                    <Tooltip content={<Tip/>}/>
-                    <ReferenceLine y={500} stroke="#f59e0b" strokeDasharray="3 3"/>
-                    <Area type="monotone" dataKey="Balance" stroke="#6366f1" fill="#6366f122" strokeWidth={2}/>
+            {/* ── BALANCE TREND ── */}
+            {MONTHLY_SUMMARY.some(m => m.balanceEnd > 0) && (
+              <motion.div className="bg-gray-900 rounded-2xl p-5 border border-gray-800" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.05,duration:0.3}}>
+                <h2 className="text-base font-semibold mb-1 flex items-center gap-2"><TrendingUp size={15} className="text-indigo-400"/> Balance Over Time</h2>
+                <p className="text-gray-500 text-xs mb-4">Your month-end balance — the clearest measure of progress.</p>
+                <ResponsiveContainer width="100%" height={160}>
+                  <AreaChart data={MONTHLY_SUMMARY.map(m => ({ month: m.label, balance: m.balanceEnd }))} margin={{top:4,right:4,bottom:0,left:0}}>
+                    <defs>
+                      <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937"/>
+                    <XAxis dataKey="month" tick={{fill:"#6b7280",fontSize:10}} tickLine={false}/>
+                    <YAxis tickFormatter={fmtK} tick={{fill:"#6b7280",fontSize:10}} width={45}/>
+                    <Tooltip content={props => <Tip {...props} fmt={fmt}/>}/>
+                    <Area type="monotone" dataKey="balance" stroke="#6366f1" strokeWidth={2.5} fill="url(#balGrad)" dot={{fill:"#6366f1",r:3}} activeDot={{r:5}}/>
                   </AreaChart>
                 </ResponsiveContainer>
               </motion.div>
-              <motion.div className="bg-gray-900 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.14,duration:0.3}}>
-                <h2 className="text-base font-semibold mb-3">Monthly Net (surplus / deficit)</h2>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={MONTHLY_SUMMARY.map(m => ({ month:m.label, Net:m.net }))}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
-                    <XAxis dataKey="month" tick={{fill:"#9ca3af",fontSize:10}}/>
-                    <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
-                    <Tooltip content={<Tip/>}/>
-                    <ReferenceLine y={0} stroke="#6b7280"/>
-                    <Bar dataKey="Net" radius={[5,5,0,0]}>
-                      {MONTHLY_SUMMARY.map((e, i) => <Cell key={i} fill={e.net >= 0 ? "#22c55e" : "#ef4444"}/>)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </motion.div>
-            </div>
+            )}
 
-            <div className="bg-gray-900 rounded-2xl p-5">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-base font-semibold">Spending Categories – {MONTHLY_SUMMARY.length}-Month Totals</h2>
-                <span className="text-xs text-gray-500 flex items-center gap-1">
-                  <ArrowUpRight size={11} className="text-red-400"/> vs Dec '25 &nbsp;
-                  <ArrowDownRight size={11} className="text-emerald-400"/> vs Dec '25
-                </span>
-              </div>
-              <div className="space-y-2.5">
-                {catTotals.slice(0, 10).map(([cat, total]) => {
-                  const pct   = (total / historicSpend) * 100;
-                  const delta = monthOverMonthDeltas[cat] || 0;
-                  const absDelta = Math.abs(delta);
-                  return (
-                    <div key={cat}>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-300 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full inline-block" style={{backgroundColor: CAT_COLORS[cat] || "#6366f1"}}/>
-                          {cat}
-                        </span>
-                        <span className="flex items-center gap-2">
-                          {absDelta > 5 && (
-                            <span className={`flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full font-medium ${delta > 0 ? "bg-red-900/40 text-red-400" : "bg-emerald-900/40 text-emerald-400"}`}>
-                              {delta > 0 ? <ArrowUpRight size={10}/> : <ArrowDownRight size={10}/>}
-                              {fmt(absDelta)}
-                            </span>
-                          )}
-                          <span className="font-semibold text-white">{fmt(total)} <span className="text-gray-500 font-normal">({pct.toFixed(1)}%)</span></span>
-                        </span>
-                      </div>
-                      <div className="h-1.5 bg-gray-800 rounded-full">
-                        <div className="h-1.5 rounded-full" style={{width:`${pct}%`, backgroundColor: CAT_COLORS[cat] || "#6366f1"}}/>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="bg-gray-900 rounded-2xl p-5">
-              <h2 className="text-base font-semibold mb-1 flex items-center gap-2"><Search size={15} className="text-gray-400"/> About the Sample Data</h2>
-              <p className="text-gray-500 text-xs mb-3">This is fictional demo data for "Alex", a junior software developer in London. Import your own CSV to see your real picture.</p>
-              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-                {[
-                  { icon:Stethoscope, title:"Variable income",          body:"Salary is the main source but freelance and bonuses create big swings. Aug and Nov show months where income dropped sharply — important to plan a buffer.", color:"text-sky-400" },
-                  { icon:Train,       title:"Transport as a swing cost", body:"A monthly travelcard is the base, but Uber and train tickets push total transport well above budget in busier months.", color:"text-blue-400" },
-                  { icon:AlertTriangle,title:"One critical deficit month", body:`${worstMonth?.label}: only ${fmt(worstMonth?.income||0)} in vs ${fmt(worstMonth?.spending||0)} out — a ${fmt(Math.abs(worstMonth?.net||0))} deficit. A strong prior month covered the gap.`, color:"text-amber-400" },
-                  { icon:TrendingDown, title:"Best month shows what's possible", body:`${bestMonth?.label}: the highest net in the dataset at +${fmt(bestMonth?.net||0)}. Freelance income on top of salary makes the difference.`, color:"text-emerald-400" },
-                  { icon:Package,     title:"'Other' needs a review",    body:"October shows over £1,100 in uncategorised 'Other' spending. Use the drill-down in Breakdown to reassign and get accurate category totals.", color:"text-purple-400" },
-                  { icon:Dumbbell,    title:"Subscriptions add up fast", body:`${fmt(SUBSCRIPTIONS.reduce((s,sub)=>s+sub.annual,0))} per year across all subscriptions. Toggle any in Goals & Health to see your savings.`, color:"text-orange-400" },
-                ].map(i => {
-                  const IIcon = i.icon;
-                  return (
-                  <div key={i.title} className="bg-gray-800 rounded-xl p-4 flex gap-3">
-                    <IIcon size={22} className={`flex-shrink-0 mt-0.5 ${i.color}`}/>
-                    <div>
-                      <div className={`font-semibold text-sm ${i.color} mb-1`}>{i.title}</div>
-                      <div className="text-gray-400 text-xs leading-relaxed">{i.body}</div>
-                    </div>
-                  </div>
-                );
-                })}
-              </div>
-            </div>
-            {/* Income by Month — dynamic source names work with any CSV */}
-            <div className="bg-gray-900 rounded-2xl p-5">
-              <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><DollarSign size={15} className="text-gray-400"/> Income Sources by Month</h2>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={MONTHLY_SUMMARY.map(m => ({ month:m.label, ...INCOME_BREAKDOWN[m.label] }))} barCategoryGap="20%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
-                  <XAxis dataKey="month" tick={{fill:"#9ca3af",fontSize:11}}/>
-                  <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
-                  <Tooltip content={<Tip/>}/>
-                  <Legend wrapperStyle={{color:"#9ca3af",fontSize:"11px"}}/>
-                  {(() => {
-                    const srcs = [...new Set(Object.values(INCOME_BREAKDOWN).flatMap(mo => Object.keys(mo)))];
-                    return srcs.map((src, i) => (
-                      <Bar key={src} dataKey={src} stackId="a" fill={INC_COLORS[i % INC_COLORS.length]}
-                        radius={i === srcs.length - 1 ? [4,4,0,0] : [0,0,0,0]}/>
-                    ));
-                  })()}
-                </BarChart>
-              </ResponsiveContainer>
+            {/* ── QUICK NAV ── */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { id:"breakdown", icon:Calendar,   label:"Months",   sub:"Spending by month"   },
+                { id:"plan",      icon:TrendingUp,  label:"Forecast", sub:"Budget & simulate"   },
+                { id:"health",    icon:Target,      label:"Goals",    sub:"Savings & health"    },
+              ].map(({ id, icon: Icon, label, sub }) => (
+                <button key={id} onClick={() => setTab(id)}
+                  className="bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-indigo-700 rounded-2xl p-4 text-left transition-all group">
+                  <Icon size={18} className="text-indigo-400 mb-2"/>
+                  <div className="font-semibold text-sm text-white">{label}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{sub}</div>
+                </button>
+              ))}
             </div>
           </motion.div>
         )}
@@ -1512,7 +1756,7 @@ export default function SpendingTracker() {
               <div className="flex gap-2 flex-wrap">
                 {MONTHS.map(m => {
                   const data = MONTHLY_SUMMARY.find(x => x.label === m);
-                  const isPositive = data.net >= 0;
+                  const isPositive = (data?.net ?? 0) >= 0;
                   return (
                     <button key={m} onClick={() => setSelMonth(m)}
                       className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
@@ -1535,6 +1779,25 @@ export default function SpendingTracker() {
                 ))}
               </div>
             </div>
+
+            {budgetPaceWarnings.length > 0 && (
+              <div className="bg-amber-900/20 border border-amber-700/50 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle size={15} className="text-amber-400"/>
+                  <span className="text-amber-300 text-sm font-semibold">Budget pace alert</span>
+                  <span className="text-amber-500 text-xs">— these categories were 80%+ spent by mid-month</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {budgetPaceWarnings.map(w => (
+                    <div key={w.cat} className="bg-amber-900/30 border border-amber-700/40 rounded-lg px-3 py-2 text-xs">
+                      <span className="text-amber-300 font-semibold">{w.cat}</span>
+                      <span className="text-amber-500 ml-1.5">{Math.round(w.pctByMid * 100)}% by day 15</span>
+                      <span className="text-gray-500 ml-1.5">({fmt(w.spentByMid)} of {fmt(w.budget)} budget)</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {(() => {
               const ms = MONTHLY_SUMMARY.find(m => m.label === selMonth);
@@ -1568,7 +1831,7 @@ export default function SpendingTracker() {
                                 innerRadius={55} outerRadius={95} dataKey="value" paddingAngle={3}
                                 onClick={data => { if (data?.name === "Other") setOtherDrillMonth(selMonth); }}
                                 style={{cursor:"pointer"}}>
-                                {selCats.map(e => <Cell key={e.name} fill={CAT_COLORS[e.name] || "#6366f1"} stroke="transparent"/>)}
+                                {selCats.filter(c => c.value > 3).map(e => <Cell key={e.name} fill={CAT_COLORS[e.name] || "#6366f1"} stroke="transparent"/>)}
                               </Pie>
                               <Tooltip formatter={v => fmt(v)} contentStyle={{background:"#111827",border:"1px solid #374151",borderRadius:"12px"}}/>
                               <Legend formatter={v => <span style={{color:"#9ca3af",fontSize:"11px"}}>{v}</span>}/>
@@ -1587,7 +1850,7 @@ export default function SpendingTracker() {
                               <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
                               <XAxis dataKey="week" tick={{fill:"#9ca3af",fontSize:11}}/>
                               <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
-                              <Tooltip content={<Tip/>}/>
+                              <Tooltip content={props => <Tip {...props} fmt={fmt}/>}/>
                               <ReferenceLine y={Math.round(totalProjected / 4.33)} stroke="#f59e0b" strokeDasharray="4 4"
                                 label={{value:"budget",fill:"#f59e0b",fontSize:9}}/>
                               <Bar dataKey="Spending" fill="#6366f1" radius={[5,5,0,0]}/>
@@ -1617,16 +1880,15 @@ export default function SpendingTracker() {
                       <span className="text-xs text-gray-500">based on your Forecast targets</span>
                     </div>
                       {(() => {
-                      const budgetMap = {
-                        Groceries: varCosts.find(c=>c.id==="groceries")?.amount || 173,
-                        Transport: varCosts.find(c=>c.id==="transport")?.amount || 172.50,
-                        "Eating Out & Cafes": varCosts.find(c=>c.id==="eatingout")?.amount || 120,
-                        "Entertainment & Nights Out": varCosts.find(c=>c.id==="entertain")?.amount || 60,
-                        Shopping: varCosts.find(c=>c.id==="shopping")?.amount || 60,
-                        Rent: fixedCosts.find(c=>c.id==="rent")?.amount || 975,
-                        "Gym & Fitness": fixedCosts.find(c=>c.id==="gym")?.amount || 69,
-                        "Phone Bill": fixedCosts.find(c=>c.id==="phone")?.amount || 37.64,
-                      };
+                      const budgetMap = {};
+                      [...fixedCosts, ...varCosts].forEach(c => {
+                        if (!c.amount) return;
+                        const matched = ALL_CAT_NAMES.find(cat =>
+                          cat.toLowerCase().includes(c.label.toLowerCase().split(" (")[0]) ||
+                          c.label.toLowerCase().includes(cat.toLowerCase())
+                        );
+                        if (matched) budgetMap[matched] = (budgetMap[matched] || 0) + c.amount;
+                      });
                       return (
                         <div className="space-y-2 mb-4">
                           {selCats.filter(({name}) => budgetMap[name]).map(({ name, value }) => {
@@ -1732,10 +1994,25 @@ export default function SpendingTracker() {
 
             {/* ── TRANSACTIONS ── */}
             <div className="border-t border-gray-800 pt-5">
-              <h2 className="text-base font-semibold mb-3 flex items-center gap-2"><CreditCard size={15} className="text-gray-400"/> Transactions</h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold flex items-center gap-2"><CreditCard size={15} className="text-gray-400"/> Transactions
+                  {manualTxs.length > 0 && <span className="text-xs bg-indigo-900/50 text-indigo-400 border border-indigo-800 px-2 py-0.5 rounded-full">{manualTxs.length} manual</span>}
+                </h2>
+                <button onClick={() => setShowQuickAdd(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all">
+                  + Add Transaction
+                </button>
+              </div>
               <div className="bg-gray-900 rounded-2xl p-4 flex flex-wrap gap-3 items-center mb-3">
-                <input type="text" placeholder="Search transactions…" value={search} onChange={e => setSearch(e.target.value)}
-                  className="flex-1 min-w-48 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"/>
+                <div className="flex-1 min-w-48 relative">
+                  <input type="text" placeholder="Search transactions…" value={search} onChange={e => setSearch(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"/>
+                  {search && (
+                    <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                      <X size={14}/>
+                    </button>
+                  )}
+                </div>
                 <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
                   className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
                   {allCats.map(c => <option key={c} value={c}>{c}</option>)}
@@ -1746,7 +2023,20 @@ export default function SpendingTracker() {
                   <option value="in">Income</option>
                   <option value="out">Spending</option>
                 </select>
-                <span className="text-gray-500 text-sm">{filteredTxs.length} entries</span>
+                <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
+                  className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
+                  <option value="All">All months</option>
+                  {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 text-sm">{filteredTxs.length} entries</span>
+                  {(search || filterCat !== "All" || filterDir !== "All") && (
+                    <button onClick={() => { setSearch(""); setFilterCat("All"); setFilterDir("All"); }}
+                      className="text-xs text-indigo-400 hover:text-indigo-300 border border-indigo-800 rounded-lg px-2 py-1 transition-colors">
+                      Clear filters
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="bg-gray-900 rounded-2xl overflow-hidden overflow-x-auto">
                 <div className="grid text-xs font-semibold text-gray-500 uppercase px-5 py-3 border-b border-gray-800 min-w-[600px]"
@@ -1754,24 +2044,52 @@ export default function SpendingTracker() {
                   <span>Date</span><span>Month</span><span>Description</span><span>Category</span><span>Type</span><span className="text-right">Amount</span>
                 </div>
                 <div className="max-h-96 overflow-y-auto divide-y divide-gray-800/40 min-w-[600px]">
-                  {filteredTxs.map((tx, i) => (
-                    <div key={`${tx.date}:${tx.desc}:${tx.amount}:${i}`} className="grid items-center px-5 py-2.5 hover:bg-gray-800/50 text-sm"
-                      style={{gridTemplateColumns:"90px 70px 1fr 160px 80px 100px"}}>
-                      <span className="text-gray-500 text-xs">{tx.date.slice(5)}</span>
-                      <span className="text-gray-600 text-xs">{tx.month}</span>
-                      <span className="text-gray-200 truncate pr-2">{tx.desc}</span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: CAT_COLORS[tx.cat] || "#6366f1"}}/>
-                        <span className="text-gray-400 text-xs truncate">{tx.cat}</span>
-                      </span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${tx.dir==="in" ? "bg-green-900/40 text-green-400" : "bg-red-900/30 text-red-400"}`}>
-                        {tx.dir === "in" ? "↑ In" : "↓ Out"}
-                      </span>
-                      <span className={`text-right font-semibold ${tx.dir==="in" ? "text-green-400" : "text-white"}`}>
-                        {tx.dir === "in" ? "+" : "-"}{fmt(tx.amount)}
-                      </span>
-                    </div>
-                  ))}
+                  {filteredTxs.map((tx, i) => {
+                    const txKey = `${tx.date}:${tx.desc}:${i}`;
+                    const isEditing = editingTxKey === txKey;
+                    return (
+                      <div key={txKey} className="grid items-center px-5 py-2.5 hover:bg-gray-800/50 text-sm"
+                        style={{gridTemplateColumns:"90px 70px 1fr 160px 80px 100px"}}>
+                        <span className="text-gray-500 text-xs">{tx.date?.slice(5) ?? "—"}</span>
+                        <span className="text-gray-600 text-xs">{tx.month}</span>
+                        <div className="flex items-center gap-1.5 pr-2 min-w-0">
+                          <span className="text-gray-200 truncate">{tx.desc}</span>
+                          {tx.manual && <span className="text-indigo-500 text-xs flex-shrink-0">✦</span>}
+                        </div>
+                        <span className="flex items-center gap-1">
+                          {isEditing ? (
+                            <select autoFocus defaultValue={tx.cat}
+                              onChange={e => updateTxCatInline(tx, e.target.value)}
+                              onBlur={() => setEditingTxKey(null)}
+                              className="bg-gray-700 border border-indigo-500 rounded-lg px-1.5 py-0.5 text-xs text-white focus:outline-none w-full">
+                              {ALL_CAT_NAMES.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                          ) : (
+                            <button onClick={() => setEditingTxKey(txKey)}
+                              className="flex items-center gap-1.5 group hover:bg-gray-700 rounded-lg px-1.5 py-0.5 transition-colors w-full text-left">
+                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: CAT_COLORS[tx.cat] || "#6366f1"}}/>
+                              <span className="text-gray-400 text-xs truncate">{tx.cat}</span>
+                              <Pencil size={9} className="text-gray-600 group-hover:text-gray-400 flex-shrink-0 ml-auto"/>
+                            </button>
+                          )}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${tx.dir==="in" ? "bg-green-900/40 text-green-400" : "bg-red-900/30 text-red-400"}`}>
+                          {tx.dir === "in" ? "↑ In" : "↓ Out"}
+                        </span>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span className={`font-semibold ${tx.dir==="in" ? "text-green-400" : "text-white"}`}>
+                            {tx.dir === "in" ? "+" : "-"}{fmt(tx.amount)}
+                          </span>
+                          {tx.manual && (
+                            <button onClick={() => setManualTxs(p => p.filter(m => !(m.date === tx.date && m.desc === tx.desc && m.amount === tx.amount)))}
+                              className="text-gray-700 hover:text-red-400 transition-colors" title="Remove manual transaction">
+                              <X size={11}/>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1824,36 +2142,45 @@ export default function SpendingTracker() {
             {planView === "forecast" && (<>
             <div className="bg-gray-900 rounded-2xl p-5">
               <h2 className="text-base font-semibold mb-4 flex items-center gap-2"><Film size={15} className="text-gray-400"/> Scenario Planning</h2>
-              <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-                {[
-                  { label:"Best Case",    income:4000, desc:"Salary + freelance + bonus" },
-                  { label:"Normal Month", income:2200, desc:"Salary only" },
-                  { label:"Hard Month",   income:800,  desc:"Minimal income month" },
-                ].map(s => (
-                  <button key={s.label} onClick={() => setMonthlyIncome(s.income)}
-                    className={`p-4 rounded-xl border transition-all text-left ${
-                      monthlyIncome === s.income
-                        ? "bg-indigo-900/40 border-indigo-600"
-                        : "bg-gray-800 border-gray-700 hover:border-gray-600"
-                    }`}>
-                    <div className="font-semibold text-white mb-1">{s.label}</div>
-                    <div className={`text-2xl font-bold mb-2 ${monthlyIncome === s.income ? "text-indigo-400" : "text-gray-300"}`}>{fmt(s.income)}</div>
-                    <div className="text-xs text-gray-500">{s.desc}</div>
-                  </button>
-                ))}
-              </div>
+              {(() => {
+                const bestIncome  = Math.round(Math.max(...MONTHLY_SUMMARY.map(m => m.income)));
+                const normIncome  = Math.round(avgIncome);
+                const hardIncome  = Math.round(Math.min(...MONTHLY_SUMMARY.map(m => m.income)));
+                const bestMonth   = MONTHLY_SUMMARY.reduce((a,b) => b.income > a.income ? b : a);
+                const hardMonth   = MONTHLY_SUMMARY.reduce((a,b) => b.income < a.income ? b : a);
+                return (
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+                    {[
+                      { label:"Best Case",    income:bestIncome, desc:`Your best month (${bestMonth.label})` },
+                      { label:"Normal Month", income:normIncome, desc:`${MONTHLY_SUMMARY.length}-month average` },
+                      { label:"Hard Month",   income:hardIncome, desc:`Your toughest month (${hardMonth.label})` },
+                    ].map(s => (
+                      <button key={s.label} onClick={() => setMonthlyIncome(s.income)}
+                        className={`p-4 rounded-xl border transition-all text-left ${
+                          monthlyIncome === s.income
+                            ? "bg-indigo-900/40 border-indigo-600"
+                            : "bg-gray-800 border-gray-700 hover:border-gray-600"
+                        }`}>
+                        <div className="font-semibold text-white mb-1">{s.label}</div>
+                        <div className={`text-2xl font-bold mb-2 ${monthlyIncome === s.income ? "text-indigo-400" : "text-gray-300"}`}>{fmt(s.income)}</div>
+                        <div className="text-xs text-gray-500">{s.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="bg-gray-900 rounded-2xl p-5 grid gap-4 grid-cols-1 sm:grid-cols-2">
               <div>
-                <label className="text-xs text-gray-400 mb-1.5 block">Expected Monthly Income (£)</label>
+                <label className="text-xs text-gray-400 mb-1.5 block">Expected Monthly Income ({sym})</label>
                 <input type="number" value={monthlyIncome} onChange={e => setMonthlyIncome(Number(e.target.value))}
                   className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"/>
                 <p className="text-gray-500 text-xs mt-1">Avg actual: {fmt(avgIncome)}/mo over {MONTHLY_SUMMARY.length} months</p>
               </div>
               <div>
                 <label className="text-xs text-gray-400 mb-1.5 block">Forecast Horizon</label>
-                <input type="range" min={3} max={11} value={horizonMonths}
+                <input type="range" min={3} max={12} value={horizonMonths}
                   onChange={e => setHorizonMonths(Number(e.target.value))} className="w-full accent-indigo-500 mt-2"/>
                 <p className="text-gray-400 text-xs mt-1">{horizonMonths} months (to {forecastData[horizonMonths - 1]?.month ?? "—"})</p>
               </div>
@@ -1890,20 +2217,26 @@ export default function SpendingTracker() {
                   return (
                   <div key={c.id} className="flex items-center gap-3 bg-gray-800 rounded-xl px-4 py-2.5">
                     <Icon size={17} className="text-indigo-400 flex-shrink-0"/>
-                    <div className="flex-1">
-                      <span className="text-sm font-medium text-white">{c.label}</span>
-                      {c.note && <span className="ml-2 text-xs text-amber-400 bg-amber-900/30 px-1.5 py-0.5 rounded">{c.note}</span>}
+                    <div className="flex-1 min-w-0">
+                      <input type="text" value={c.label}
+                        onChange={e => renameFixed(c.id, e.target.value)}
+                        className="bg-transparent text-sm font-medium text-white w-full focus:outline-none focus:border-b focus:border-indigo-500 truncate"/>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-gray-500 text-sm">£</span>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span className="text-gray-500 text-sm">{sym}</span>
                       <input type="number" value={c.amount} step="0.01"
                         onChange={e => updateFixed(c.id, e.target.value)}
                         className="w-24 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-sm text-white text-right focus:outline-none focus:border-indigo-500"/>
                       <span className="text-gray-500 text-xs">/mo</span>
+                      <button onClick={() => removeFixed(c.id)} className="text-gray-600 hover:text-red-400 transition-colors ml-1"><X size={14}/></button>
                     </div>
                   </div>
                   );
                 })}
+                <button onClick={addFixed}
+                  className="w-full py-2 rounded-xl border border-dashed border-gray-700 text-gray-500 hover:border-indigo-600 hover:text-indigo-400 text-sm transition-all">
+                  + Add fixed cost
+                </button>
               </div>
             </div>
 
@@ -1926,12 +2259,15 @@ export default function SpendingTracker() {
                   return (
                     <div key={c.id} className="bg-gray-800 rounded-xl p-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <Icon size={15} className="text-amber-400"/>
-                        <span className="text-sm font-medium text-white">{c.label}</span>
+                        <Icon size={15} className="text-amber-400 flex-shrink-0"/>
+                        <input type="text" value={c.label}
+                          onChange={e => renameVar(c.id, e.target.value)}
+                          className="flex-1 bg-transparent text-sm font-medium text-white focus:outline-none focus:border-b focus:border-amber-500 min-w-0 truncate"/>
+                        <button onClick={() => removeVar(c.id)} className="text-gray-600 hover:text-red-400 transition-colors flex-shrink-0"><X size={13}/></button>
                       </div>
                       {avg8 > 0 && <div className="text-xs text-gray-500 mb-2">{MONTHLY_SUMMARY.length}-mo avg actual: <span className="text-gray-300">{fmt(avg8)}/mo</span></div>}
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-500 text-xs">£</span>
+                        <span className="text-gray-500 text-xs">{sym}</span>
                         <input type="number" value={c.amount} step="5"
                           onChange={e => updateVar(c.id, e.target.value)}
                           className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500"/>
@@ -1940,6 +2276,10 @@ export default function SpendingTracker() {
                     </div>
                   );
                 })}
+                <button onClick={addVar}
+                  className="bg-gray-800/50 border border-dashed border-gray-700 hover:border-amber-600 hover:text-amber-400 rounded-xl p-3 text-gray-500 text-sm transition-all">
+                  + Add variable budget
+                </button>
               </div>
             </div>
 
@@ -1951,7 +2291,7 @@ export default function SpendingTracker() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
                   <XAxis dataKey="label" tick={{fill:"#9ca3af",fontSize:10}}/>
                   <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
-                  <Tooltip content={<Tip/>}/>
+                  <Tooltip content={props => <Tip {...props} fmt={fmt}/>}/>
                   <ReferenceLine y={0}   stroke="#ef4444" strokeDasharray="4 4" label={{value:"£0",fill:"#ef4444",fontSize:10}}/>
                   <ReferenceLine y={500} stroke="#f59e0b" strokeDasharray="3 3" label={{value:"£500 buffer",fill:"#f59e0b",fontSize:9}}/>
                   <Area type="monotone" dataKey="Balance" stroke="#6366f1" fill="#6366f122" strokeWidth={2} name="Balance"/>
@@ -2085,7 +2425,7 @@ export default function SpendingTracker() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
                           <XAxis dataKey="month" tick={{fill:"#9ca3af",fontSize:10}}/>
                           <YAxis tickFormatter={fmtK} tick={{fill:"#9ca3af"}}/>
-                          <Tooltip content={<Tip/>}/>
+                          <Tooltip content={props => <Tip {...props} fmt={fmt}/>}/>
                           <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="4 4" label={{value:"£0",fill:"#ef4444",fontSize:9}}/>
                           <ReferenceLine y={500} stroke="#f59e0b" strokeDasharray="3 3" label={{value:"£500 buffer",fill:"#f59e0b",fontSize:9}}/>
                           <Line type="monotone" dataKey="Without Purchase" stroke="#6b7280" strokeDasharray="6 3" strokeWidth={2} dot={false}/>
@@ -2134,6 +2474,75 @@ export default function SpendingTracker() {
               </div>
             </div>
 
+            {/* ─── ACTION PLAN ─── */}
+            <div className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-700/40 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Zap size={15} className="text-indigo-400"/>
+                  <span className="font-semibold text-sm">This Month's Priorities</span>
+                </div>
+                <span className="text-xs text-gray-500">Top {monthlyPriorities.length} action{monthlyPriorities.length !== 1 ? "s" : ""}</span>
+              </div>
+              <div className="space-y-2.5">
+                {monthlyPriorities.map((item, i) => (
+                  <div key={i} className={`flex items-start gap-3 rounded-xl p-3 ${
+                    item.urgency === "red"   ? "bg-red-900/30 border border-red-800/40" :
+                    item.urgency === "amber" ? "bg-amber-900/30 border border-amber-800/40" :
+                                              "bg-emerald-900/30 border border-emerald-800/40"
+                  }`}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold ${
+                      item.urgency === "red" ? "bg-red-500 text-white" : item.urgency === "amber" ? "bg-amber-500 text-black" : "bg-emerald-500 text-black"
+                    }`}>{i + 1}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-semibold text-sm ${item.urgency === "red" ? "text-red-300" : item.urgency === "amber" ? "text-amber-300" : "text-emerald-300"}`}>{item.title}</div>
+                      <div className="text-gray-400 text-xs mt-0.5 leading-relaxed">{item.body}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-gray-500">
+                <span>Min. income to stay on track with all goals:</span>
+                <span className={`font-bold text-sm ${monthlyIncome >= incomeNeededForGoals ? "text-emerald-400" : "text-amber-400"}`}>{fmt(incomeNeededForGoals)}/mo</span>
+              </div>
+            </div>
+
+            {/* ─── PAYDAY PROTOCOL ─── */}
+            {paydayProtocol.transfers.length > 0 && (
+              <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+                <div className="flex items-center gap-2 mb-4">
+                  <DollarSign size={15} className="text-emerald-400"/>
+                  <span className="font-semibold text-sm">Payday Protocol</span>
+                  <span className="text-xs text-gray-500 ml-1">— transfer these on payday before spending anything</span>
+                </div>
+                <div className="space-y-2 mb-4">
+                  {paydayProtocol.transfers.map((t, i) => {
+                    const Icon = GOAL_ICONS[t.iconKey] ?? Target;
+                    return (
+                      <div key={i} className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-6 h-6 rounded-full bg-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-300">{i + 1}</div>
+                          <Icon size={14} className="text-indigo-400"/>
+                          <span className="text-sm text-gray-200">{t.name}</span>
+                        </div>
+                        <span className="text-emerald-400 font-bold">{fmt(t.monthly)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-gray-800 pt-3 grid grid-cols-2 gap-3">
+                  <div className="bg-gray-800 rounded-xl p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">Left for spending</div>
+                    <div className={`text-xl font-bold ${paydayProtocol.remaining > 0 ? "text-white" : "text-red-400"}`}>{fmt(paydayProtocol.remaining)}</div>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">Weekly budget</div>
+                    <div className={`text-xl font-bold ${paydayProtocol.weekly > 0 ? "text-indigo-400" : "text-red-400"}`}>{fmt(paydayProtocol.weekly)}</div>
+                  </div>
+                </div>
+                <p className="text-gray-600 text-xs mt-3">Based on your forecast income ({fmt(monthlyIncome)}/mo) and goal timelines. Update in Plan tab.</p>
+              </div>
+            )}
+
             <div className="flex justify-between items-center mb-1">
               <h2 className="text-base font-semibold">Your Goals</h2>
               <button onClick={() => { setEditingGoal({}); setShowGoalEditor(true); }}
@@ -2178,7 +2587,7 @@ export default function SpendingTracker() {
                       <div className="flex items-start gap-2">
                       <button onClick={() => { setEditingGoal(goal); setShowGoalEditor(true); }}
                         className="text-gray-600 hover:text-gray-300 p-1 transition-colors" title="Edit goal">
-                        <Star size={14}/>
+                        <Pencil size={14}/>
                       </button>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-indigo-400">{fmt(goal.saved)}</div>
@@ -2234,7 +2643,7 @@ export default function SpendingTracker() {
                       );
                     })()}
 
-                    <GoalInput goal={goal} setGoals={setGoals}/>
+                    <GoalInput goal={goal} setGoals={setGoals} sym={sym}/>
                   </div>
                 );
               })}
@@ -2331,7 +2740,12 @@ export default function SpendingTracker() {
                 ) : null;
               })()}
               <div className="space-y-2">
-                {SUBSCRIPTIONS.map((sub, idx) => {
+                {activeSubs.length === 0 && (
+                <div className="text-center py-6 text-gray-500 text-sm">
+                  No recurring subscriptions detected in your transactions.
+                </div>
+              )}
+              {activeSubs.map((sub, idx) => {
                   const Icon = sub.icon;
                   const isCancelled = !!subToggles[idx];
                   return (
@@ -2344,7 +2758,7 @@ export default function SpendingTracker() {
                           {!sub.optional && <span className="text-xs bg-indigo-700 text-indigo-300 px-2 py-0.5 rounded">contract</span>}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {sub.monthly > 0 ? `£${sub.monthly.toFixed(2)}/mo` : "One-time"}
+                          {sub.monthly > 0 ? `${sym}${sub.monthly.toFixed(2)}/mo` : "One-time"}
                           <span className="mx-1.5 text-gray-700">·</span>
                           <span className="font-semibold text-gray-300">{fmt(sub.annual)}/year</span>
                         </div>
@@ -2352,7 +2766,7 @@ export default function SpendingTracker() {
                       {sub.optional && (
                         <button onClick={() => setSubToggles(prev => ({ ...prev, [idx]: !prev[idx] }))}
                           className={`text-sm font-semibold px-3 py-1.5 rounded-full transition-all ${isCancelled ? "bg-red-900/50 text-red-400 border border-red-700 hover:bg-red-900/80" : "bg-gray-700 text-gray-300 border border-gray-600 hover:bg-gray-600 hover:text-white"}`}>
-                          {isCancelled ? <span className="flex items-center gap-1"><X size={11}/> Cancel</span> : <span className="flex items-center gap-1"><Check size={11}/> Keep</span>}
+                          {isCancelled ? <span className="flex items-center gap-1"><Check size={11}/> Keep</span> : <span className="flex items-center gap-1"><X size={11}/> Cancel</span>}
                         </button>
                       )}
                     </div>
@@ -2605,6 +3019,16 @@ export default function SpendingTracker() {
           transactions={ALL_TRANSACTIONS}
           onClose={() => setOtherDrillMonth(null)}
           onReassign={handleReassign}
+          fmt={fmt}
+        />
+      )}
+
+      {/* ═══════════════ QUICK-ADD TRANSACTION MODAL ═══════════════ */}
+      {showQuickAdd && (
+        <QuickAddModal
+          sym={sym}
+          onSave={tx => setManualTxs(p => [...p, tx])}
+          onClose={() => setShowQuickAdd(false)}
         />
       )}
 

@@ -28,7 +28,7 @@ describe('fmtK', () => {
 
 describe('autocat', () => {
   it('classifies rent payments', () => {
-    expect(autocat('THOMAS KNIGHT')).toBe('Rent');
+    expect(autocat('MONTHLY RENT PAYMENT')).toBe('Rent');
   });
   it('classifies grocery shops', () => {
     expect(autocat('TESCO EXTRA')).toBe('Groceries');
@@ -55,8 +55,8 @@ describe('autocat', () => {
   it('classifies O2 phone bill', () => {
     expect(autocat('O2 MOBILE')).toBe('Phone Bill');
   });
-  it('classifies Royal Free as Healthcare', () => {
-    expect(autocat('ROYAL FREE LONDON')).toBe('Healthcare');
+  it('classifies pharmacy as Healthcare', () => {
+    expect(autocat('BOOTS PHARMACY')).toBe('Healthcare');
   });
   it('classifies Amazon (non-Prime) as Shopping', () => {
     expect(autocat('AMAZON MARKETPLACE')).toBe('Shopping');
