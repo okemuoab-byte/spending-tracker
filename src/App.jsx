@@ -354,7 +354,7 @@ const parseDateStr = (dateStr) => {
   return { dd: parts[0].padStart(2,"0"), mm: parts[1].padStart(2,"0"), yyyy: parts[2] };
 };
 
-const parseCSV = (text) => {
+const parseCSV = (text, userRules = []) => {
   const { data } = Papa.parse(text.trim(), { header: true, skipEmptyLines: true });
   if (!data.length) throw new Error("File appears empty — no rows found.");
 
@@ -398,7 +398,8 @@ const parseCSV = (text) => {
       txs.push({ date: iso, desc, cat: src, amount: Math.round(credit*100)/100, dir:"in",  month: label });
     }
     if (debit > 0) {
-      const cat = autocat(desc);
+      const userMatch = userRules.find(r => desc.toLowerCase().includes(r.keyword.toLowerCase()));
+      const cat = userMatch ? userMatch.cat : autocat(desc);
       map[label].spending += debit;
       map[label].cats[cat] = (map[label].cats[cat] || 0) + debit;
       txs.push({ date: iso, desc, cat, amount: Math.round(debit*100)/100,       dir:"out", month: label });
@@ -729,6 +730,65 @@ function GoalEditorModal({ goal, onSave, onDelete, onClose }) {
   );
 }
 
+// ── MY RULES MODAL ────────────────────────────────────────────────────────────
+function MyRulesModal({ rules, onSave, onClose }) {
+  const [localRules, setLocalRules] = useState(rules);
+  const [keyword, setKeyword]       = useState("");
+  const [cat, setCat]               = useState("Other");
+  const addRule = () => {
+    if (!keyword.trim()) return;
+    setLocalRules(p => [...p, { keyword: keyword.trim(), cat }]);
+    setKeyword(""); setCat("Other");
+  };
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-md shadow-2xl max-h-[80vh] flex flex-col">
+        <div className="flex justify-between items-center mb-5">
+          <div>
+            <h2 className="text-base font-bold text-white">My Categorisation Rules</h2>
+            <p className="text-gray-500 text-xs mt-0.5">Checked before built-in rules on every import</p>
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={18}/></button>
+        </div>
+        <div className="flex-1 overflow-y-auto space-y-1.5 mb-4 min-h-0">
+          {localRules.length === 0 && <p className="text-gray-600 text-sm text-center py-6">No custom rules yet</p>}
+          {localRules.map((r, i) => (
+            <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-xl px-4 py-2.5">
+              <span className="text-xs text-indigo-400 font-mono flex-1 truncate">{r.keyword}</span>
+              <span className="text-xs text-gray-500">→</span>
+              <span className="text-xs text-white font-semibold w-28 truncate">{r.cat}</span>
+              <button onClick={() => setLocalRules(p => p.filter((_, j) => j !== i))}
+                className="text-gray-600 hover:text-red-400 transition-colors"><X size={12}/></button>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-gray-800 pt-4 space-y-3">
+          <div className="flex gap-2">
+            <input type="text" placeholder="Keyword e.g. MONZO FLEX" value={keyword}
+              onChange={e => setKeyword(e.target.value)} onKeyDown={e => e.key === "Enter" && addRule()}
+              className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500"/>
+            <select value={cat} onChange={e => setCat(e.target.value)}
+              className="bg-gray-800 border border-gray-700 rounded-xl px-2 py-2 text-white text-sm focus:outline-none focus:border-indigo-500">
+              {ALL_CAT_NAMES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <button onClick={addRule}
+              className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-all">+</button>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => { onSave(localRules); onClose(); }}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 text-sm font-semibold transition-all">
+              Save Rules
+            </button>
+            <button onClick={onClose}
+              className="px-5 py-2.5 rounded-xl text-sm text-gray-400 border border-gray-700 hover:border-gray-500 transition-all">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── MAIN ─────────────────────────────────────────────────────────────────────
 export default function SpendingTracker() {
   const [tab, setTab]             = useState("dashboard");
@@ -765,7 +825,10 @@ export default function SpendingTracker() {
   const [affordabilityItem, setAffordabilityItem]   = useState("");
   const [affordabilityAmount, setAffordabilityAmount] = useState("");
   const [affordabilityDate, setAffordabilityDate]     = useState("");
-  const [spreadMonths, setSpreadMonths]     = useState(6);
+  const [spreadMonths, setSpreadMonths]         = useState(6);
+  const [catCuts, setCatCuts]                   = useState({});
+  const [excludedOneOffs, setExcludedOneOffs]   = useState(new Set());
+  const [useAdjustedBaseline, setUseAdjustedBaseline] = useState(false);
   const [importedData, setImportedData]     = useState(() => {
     try {
       const raw = localStorage.getItem("spendingData");
@@ -775,6 +838,8 @@ export default function SpendingTracker() {
   const [showImport, setShowImport]         = useState(false);
   const [dragOver, setDragOver]             = useState(false);
   const [importPreview, setImportPreview]   = useState(null);
+  const [userCatRules, setUserCatRules]     = useState(() => { try { return JSON.parse(localStorage.getItem("userCatRules") ?? "[]"); } catch { return []; } });
+  const [showRulesModal, setShowRulesModal] = useState(false);
   const [otherDrillMonth, setOtherDrillMonth] = useState(null);
   const [weeklyView, setWeeklyView]         = useState(false);
   const [txCatOverrides, setTxCatOverrides] = useState(() => {
@@ -830,6 +895,9 @@ export default function SpendingTracker() {
   // ── PERSIST GOALS & MANUAL TXS ───────────────────────────────────────────────
   useEffect(() => { localStorage.setItem("goals", JSON.stringify(goals)); }, [goals]);
   useEffect(() => { try { localStorage.setItem("manualTxs", JSON.stringify(manualTxs)); } catch {} }, [manualTxs]);
+  useEffect(() => { try { localStorage.setItem("userCatRules", JSON.stringify(userCatRules)); } catch {} }, [userCatRules]);
+
+  useEffect(() => { setCatCuts({}); }, [affordabilityAmount, affordabilityDate]);
 
   // ── AUTO-DISMISS IMPORT SUCCESS BANNER ───────────────────────────────────────
   useEffect(() => {
@@ -862,7 +930,7 @@ export default function SpendingTracker() {
     setCsvError(null);
     const reader = new FileReader();
     reader.onload = (e) => {
-      try { setImportPreview(parseCSV(e.target.result)); }
+      try { setImportPreview(parseCSV(e.target.result, userCatRules)); }
       catch (err) { setCsvError(err.message); }
     };
     reader.readAsText(file);
@@ -896,20 +964,23 @@ export default function SpendingTracker() {
   const worstMonth = [...MONTHLY_SUMMARY].sort((a,b) => a.net - b.net)[0];
   const bestMonth  = [...MONTHLY_SUMMARY].sort((a,b) => b.net - a.net)[0];
 
-  const monthOverMonthDeltas = useMemo(() => {
-    const months = MONTHLY_SUMMARY.map(m => m.label);
-    if (months.length < 2) return {};
-    const latest = months[months.length - 1];
-    const prev   = months[months.length - 2];
-    const latestCats = MONTHLY_CATEGORIES[latest] || {};
-    const prevCats   = MONTHLY_CATEGORIES[prev]   || {};
-    const deltas = {};
-    const allKeys = new Set([...Object.keys(latestCats), ...Object.keys(prevCats)]);
-    allKeys.forEach(k => {
-      deltas[k] = (latestCats[k] || 0) - (prevCats[k] || 0);
-    });
-    return deltas;
-  }, [MONTHLY_CATEGORIES]);
+
+  // ── MOM SUMMARY DELTAS ───────────────────────────────────────────────────
+  const momSummaryDeltas = useMemo(() => {
+    if (MONTHLY_SUMMARY.length < 2) return null;
+    const cur  = MONTHLY_SUMMARY[MONTHLY_SUMMARY.length - 1];
+    const prev = MONTHLY_SUMMARY[MONTHLY_SUMMARY.length - 2];
+    const spendDelta  = cur.spending - prev.spending;
+    const incomeDelta = cur.income   - prev.income;
+    const netDelta    = cur.net      - prev.net;
+    return {
+      curLabel: cur.label, prevLabel: prev.label,
+      spendDelta, incomeDelta, netDelta,
+      spendPct:  prev.spending > 0 ? (spendDelta  / prev.spending)  * 100 : 0,
+      incomePct: prev.income   > 0 ? (incomeDelta / prev.income)    * 100 : 0,
+      netPct:    Math.abs(prev.net) > 1 ? (netDelta / Math.abs(prev.net)) * 100 : 0,
+    };
+  }, [MONTHLY_SUMMARY]);
 
   // ── 3-MONTH CATEGORY TREND (up / flat / down) ────────────────────────────
   const categoryTrends = useMemo(() => {
@@ -1023,12 +1094,52 @@ export default function SpendingTracker() {
   const fcStartIdx   = (lastMoIdx + 1) % 12;
   const fcStartYear  = lastMoIdx === 11 ? lastYear + 1 : lastYear;
 
+  // ── ONE-OFF SPIKE DETECTION ───────────────────────────────────────────────
+  const candidateOneOffs = useMemo(() => {
+    const catMonthlyTotals = {};
+    MONTHLY_SUMMARY.forEach(mo => {
+      Object.entries(MONTHLY_CATEGORIES[mo.label] || {}).forEach(([cat, val]) => {
+        if (!catMonthlyTotals[cat]) catMonthlyTotals[cat] = [];
+        catMonthlyTotals[cat].push(val);
+      });
+    });
+    const catMedian = {};
+    Object.entries(catMonthlyTotals).forEach(([cat, vals]) => {
+      const sorted = [...vals].sort((a, b) => a - b);
+      catMedian[cat] = sorted[Math.floor(sorted.length / 2)];
+    });
+    const seen = new Set();
+    return ALL_TRANSACTIONS
+      .filter(tx => {
+        if (tx.dir !== "out") return false;
+        const median = catMedian[tx.cat];
+        return median && tx.amount > median * 2 && tx.amount > 50;
+      })
+      .map(tx => ({
+        key: `${tx.date}:${tx.desc}:${tx.amount}`,
+        date: tx.date, desc: tx.desc, cat: tx.cat,
+        amount: tx.amount, month: tx.month,
+        catMedian: Math.round(catMedian[tx.cat]),
+      }))
+      .filter(c => { if (seen.has(c.key)) return false; seen.add(c.key); return true; })
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 15);
+  }, [ALL_TRANSACTIONS, MONTHLY_CATEGORIES, MONTHLY_SUMMARY]);
+
+  const adjustedAvgSpend = useMemo(() => {
+    if (excludedOneOffs.size === 0) return avgSpend;
+    const totalExcluded = ALL_TRANSACTIONS
+      .filter(tx => excludedOneOffs.has(`${tx.date}:${tx.desc}:${tx.amount}`))
+      .reduce((s, tx) => s + tx.amount, 0);
+    return Math.max(0, (historicSpend - totalExcluded) / MONTHLY_SUMMARY.length);
+  }, [excludedOneOffs, ALL_TRANSACTIONS, historicSpend, MONTHLY_SUMMARY]);
+
   const forecastData = useMemo(() => {
     let balance = currentBalance;
     return Array.from({ length: horizonMonths }, (_, idx) => {
       const mIdx = (fcStartIdx + idx) % 12;
       const yr   = fcStartYear + Math.floor((fcStartIdx + idx) / 12);
-      const adjusted = totalProjected;
+      const adjusted = useAdjustedBaseline ? Math.round(adjustedAvgSpend) : totalProjected;
       balance = balance + monthlyIncome - adjusted;
       return {
         month: `${MO_ABBR[mIdx]} '${String(yr).slice(2)}`,
@@ -1038,7 +1149,7 @@ export default function SpendingTracker() {
         Balance: Math.round(balance),
       };
     });
-  }, [totalProjected, monthlyIncome, varCosts, horizonMonths, currentBalance, fcStartIdx, fcStartYear]);
+  }, [totalProjected, monthlyIncome, varCosts, horizonMonths, currentBalance, fcStartIdx, fcStartYear, useAdjustedBaseline, adjustedAvgSpend]);
 
   const balanceBridge = [
     ...MONTHLY_SUMMARY.map(m => ({ label:m.label, Balance:Math.round(m.balanceEnd), actual:true })),
@@ -1104,6 +1215,43 @@ export default function SpendingTracker() {
       balanceAfterPurchase: Math.round(currentBalance + monthlyNetVal - amt),
     };
   }, [affordabilityAmount, affordabilityDate, forecastData, spreadMonths, currentBalance]);
+
+  // ── CUT SUGGESTIONS FOR AFFORDABILITY SIMULATOR ─────────────────────────
+  const CUTTABLE_CATS = ["Eating Out & Cafes","Entertainment & Nights Out","Shopping","Personal Care","Subscriptions"];
+
+  const cuttableCatAvgs = useMemo(() =>
+    CUTTABLE_CATS
+      .map(cat => {
+        const months = MONTHLY_SUMMARY.filter(m => (MONTHLY_CATEGORIES[m.label]?.[cat] ?? 0) > 0);
+        const avg = months.length > 0 ? months.reduce((s, m) => s + (MONTHLY_CATEGORIES[m.label]?.[cat] ?? 0), 0) / months.length : 0;
+        return { cat, avg: Math.round(avg) };
+      })
+      .filter(c => c.avg > 0)
+      .sort((a, b) => b.avg - a.avg)
+  , [MONTHLY_SUMMARY, MONTHLY_CATEGORIES]);
+
+  const simWithCuts = useMemo(() => {
+    if (!purchaseSimulation) return null;
+    const totalCut = Object.values(catCuts).reduce((s, v) => s + (Number(v) || 0), 0);
+    if (totalCut <= 0) return null;
+    let bal = currentBalance;
+    const parts = affordabilityDate.split("-");
+    const pYear = parseInt(parts[0]); const pMon = parseInt(parts[1]);
+    const MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const purchaseLabel = `${MO[pMon - 1]} '${String(pYear).slice(2)}`;
+    const purchaseIdx = forecastData.findIndex(d => d.month === purchaseLabel);
+    const monthlyCharge = parseFloat(affordabilityAmount) / spreadMonths;
+    const simMonths = forecastData.map((d, idx) => {
+      const isSpread = idx >= purchaseIdx && idx < purchaseIdx + spreadMonths;
+      const netAdj = d.Net + totalCut;
+      bal += isSpread ? netAdj - monthlyCharge : netAdj;
+      return Math.round(bal);
+    });
+    const lowest = Math.min(...simMonths);
+    const verdict = lowest >= 500 ? "COMFORTABLE" : lowest >= 0 ? "TIGHT" : "SHORTFALL";
+    const recoverIdx = simMonths.findIndex((b, i) => i >= purchaseIdx + spreadMonths && b >= 500);
+    return { totalCut, verdict, lowest, recoversAt: recoverIdx >= 0 ? forecastData[recoverIdx]?.month : null };
+  }, [purchaseSimulation, catCuts, forecastData, affordabilityDate, affordabilityAmount, spreadMonths, currentBalance]);
 
   // ── AUTO-DETECT RECURRING SUBSCRIPTIONS FROM REAL DATA ──────────────────
   const detectedSubs = useMemo(() => {
@@ -1637,6 +1785,34 @@ export default function SpendingTracker() {
                 );
               })()}
             </div>
+
+            {/* ── VS LAST MONTH ── */}
+            {momSummaryDeltas && (
+              <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold flex items-center gap-2"><TrendingUp size={14} className="text-indigo-400"/> vs Last Month</h2>
+                  <span className="text-xs text-gray-500">{momSummaryDeltas.curLabel} vs {momSummaryDeltas.prevLabel}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label:"Spending", delta:momSummaryDeltas.spendDelta,  pct:momSummaryDeltas.spendPct,  good:momSummaryDeltas.spendDelta  <= 0 },
+                    { label:"Income",   delta:momSummaryDeltas.incomeDelta, pct:momSummaryDeltas.incomePct, good:momSummaryDeltas.incomeDelta >= 0 },
+                    { label:"Net",      delta:momSummaryDeltas.netDelta,    pct:momSummaryDeltas.netPct,    good:momSummaryDeltas.netDelta    >= 0 },
+                  ].map(({ label, delta, pct, good }) => {
+                    const Icon = delta >= 0 ? ArrowUpRight : ArrowDownRight;
+                    return (
+                      <div key={label} className={`rounded-xl p-3 border ${good ? "bg-emerald-900/20 border-emerald-800/50" : "bg-red-900/20 border-red-800/50"}`}>
+                        <div className="text-xs text-gray-500 mb-1">{label}</div>
+                        <div className={`text-base font-bold flex items-center gap-0.5 ${good ? "text-emerald-400" : "text-red-400"}`}>
+                          <Icon size={14}/>{delta >= 0 ? "+" : ""}{fmt(delta)}
+                        </div>
+                        <div className={`text-xs mt-0.5 ${good ? "text-emerald-700" : "text-red-700"}`}>{pct >= 0 ? "+" : ""}{pct.toFixed(1)}%</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* ── THIS MONTH'S PRIORITIES ── */}
             <div className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-700/40 rounded-2xl p-5">
@@ -2186,6 +2362,49 @@ export default function SpendingTracker() {
               </div>
             </div>
 
+            {/* ── EXCLUDE ONE-OFF SPIKES ── */}
+            {candidateOneOffs.length > 0 && (
+              <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h2 className="text-sm font-semibold flex items-center gap-2"><AlertTriangle size={14} className="text-amber-400"/> Exclude One-Off Spikes</h2>
+                    <p className="text-gray-500 text-xs mt-0.5">These were unusually large (&gt;2× category median). Uncheck to remove from baseline.</p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-xs text-gray-400">Adj. avg: <span className="text-white font-bold">{fmt(adjustedAvgSpend)}/mo</span>
+                      {excludedOneOffs.size > 0 && <span className="text-emerald-400 ml-1">(was {fmt(avgSpend)}/mo)</span>}
+                    </span>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={useAdjustedBaseline} disabled={excludedOneOffs.size === 0}
+                        onChange={e => setUseAdjustedBaseline(e.target.checked)} className="accent-indigo-500 w-4 h-4"/>
+                      <span className="text-xs text-gray-300">Use as baseline</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                  {candidateOneOffs.map(c => (
+                    <label key={c.key} className="flex items-center gap-3 cursor-pointer bg-gray-800 hover:bg-gray-700 rounded-xl px-4 py-2 transition-colors">
+                      <input type="checkbox" checked={!excludedOneOffs.has(c.key)}
+                        onChange={e => setExcludedOneOffs(prev => { const n = new Set(prev); e.target.checked ? n.delete(c.key) : n.add(c.key); return n; })}
+                        className="accent-indigo-500 w-4 h-4 flex-shrink-0"/>
+                      <span className="text-xs text-gray-500 w-12 flex-shrink-0">{c.date.slice(5)}</span>
+                      <span className="text-xs text-gray-500 w-16 flex-shrink-0">{c.month}</span>
+                      <span className="flex-1 text-sm text-gray-200 truncate">{c.desc}</span>
+                      <span className="text-xs text-gray-500 flex-shrink-0 hidden sm:block">{c.cat}</span>
+                      <span className="text-white font-bold text-sm flex-shrink-0">{fmt(c.amount)}</span>
+                      <span className="text-gray-600 text-xs flex-shrink-0">{c.catMedian > 0 ? `${Math.round(c.amount / c.catMedian)}×` : "large"}</span>
+                    </label>
+                  ))}
+                </div>
+                {excludedOneOffs.size > 0 && (
+                  <button onClick={() => { setExcludedOneOffs(new Set()); setUseAdjustedBaseline(false); }}
+                    className="mt-3 text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                    Reset ({excludedOneOffs.size} excluded)
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className={`rounded-2xl p-4 border grid gap-4 grid-cols-2 sm:grid-cols-4 ${projectedNet >= 0 ? "bg-emerald-900/20 border-emerald-800" : "bg-red-900/20 border-red-800"}`}>
               {[
                 { label:"Monthly Income",  value:monthlyIncome,  color:"text-green-400" },
@@ -2417,6 +2636,56 @@ export default function SpendingTracker() {
                         </div>
                       </div>
                     </div>
+                    {/* ── CUT SUGGESTIONS ── */}
+                    {(purchaseSimulation.verdict === "TIGHT" || purchaseSimulation.verdict === "SHORTFALL") && cuttableCatAvgs.length > 0 && (
+                      <div className="bg-gray-800/50 rounded-2xl p-5 border border-amber-800/40">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Lightbulb size={14} className="text-amber-400"/>
+                          <span className="text-sm font-semibold text-amber-300">Spending cuts that could change the verdict</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-4">
+                          Trim discretionary categories to boost your monthly surplus.
+                          {simWithCuts && simWithCuts.verdict !== purchaseSimulation.verdict && (
+                            <span className={`font-semibold ml-1 ${verdictStyle(simWithCuts.verdict).text}`}>
+                              With these cuts: {verdictStyle(simWithCuts.verdict).label}
+                            </span>
+                          )}
+                        </p>
+                        <div className="space-y-3">
+                          {cuttableCatAvgs.map(({ cat, avg }) => {
+                            const cut = Number(catCuts[cat] || 0);
+                            return (
+                              <div key={cat} className="bg-gray-800 rounded-xl p-3">
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-sm text-gray-200">{cat}</span>
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <span className="text-gray-500">avg {fmt(avg)}/mo</span>
+                                    {cut > 0 && <span className="text-emerald-400 font-semibold">→ {fmt(Math.max(0, avg - cut))}/mo</span>}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <input type="range" min={0} max={avg} step={5} value={cut}
+                                    onChange={e => setCatCuts(p => ({ ...p, [cat]: Number(e.target.value) }))}
+                                    className="flex-1 accent-amber-500"/>
+                                  <span className="text-amber-400 font-bold text-sm w-14 text-right">{cut > 0 ? `-${fmt(cut)}` : fmt(0)}</span>
+                                  {cut > 0 && (
+                                    <button onClick={() => setCatCuts(p => ({ ...p, [cat]: 0 }))}
+                                      className="text-gray-600 hover:text-gray-400 transition-colors"><X size={12}/></button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {simWithCuts && simWithCuts.totalCut > 0 && (
+                          <div className={`mt-4 rounded-xl p-3 border text-sm font-semibold text-center ${verdictStyle(simWithCuts.verdict).border} ${verdictStyle(simWithCuts.verdict).bg} ${verdictStyle(simWithCuts.verdict).text}`}>
+                            Cut {fmt(simWithCuts.totalCut)}/mo → {verdictStyle(simWithCuts.verdict).label}
+                            {simWithCuts.recoversAt && <span className="text-gray-400 font-normal ml-2">· recovers by {simWithCuts.recoversAt}</span>}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <motion.div className="bg-gray-800/40 rounded-2xl p-5" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0,duration:0.3}}>
                       <h3 className="text-sm font-semibold mb-1 text-white">Balance Trajectory: With vs. Without Purchase</h3>
                       <p className="text-xs text-gray-500 mb-4">Dashed grey = without purchase · Coloured = with purchase · Circle = purchase moment.</p>
@@ -2569,6 +2838,9 @@ export default function SpendingTracker() {
                 const rawMonthsAway = monthIdx === -1 ? 0 : (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth());
                 const isOverdue = rawMonthsAway < 0;
                 const monthsAway = Math.max(0, rawMonthsAway);
+                const deadlineDate = monthIdx >= 0 ? new Date(yearNum, monthIdx + 1, 0) : null;
+                const daysRemaining = deadlineDate ? Math.ceil((deadlineDate - now) / 86400000) : null;
+                const dayUrgency = daysRemaining === null ? null : daysRemaining > 60 ? "green" : daysRemaining >= 14 ? "amber" : "red";
                 const stillNeeded = Math.max(0, goal.target - goal.saved);
                 const monthlyNeeded = monthsAway > 0 ? stillNeeded / monthsAway : stillNeeded;
                 const isAchievable = !isOverdue && monthlyNeeded <= Math.max(projectedNet, 0);
@@ -2581,7 +2853,12 @@ export default function SpendingTracker() {
                         <GoalIcon size={32} className="text-indigo-400"/>
                         <div>
                           <h3 className="font-semibold text-white text-lg">{goal.name}</h3>
-                          <p className="text-gray-500 text-xs">Target: {fmt(goal.target)} by {dateLabel}</p>
+                          <p className="text-gray-500 text-xs">
+                            Target: {fmt(goal.target)} by {dateLabel}
+                            {!isOverdue && daysRemaining !== null && daysRemaining <= 60 && (
+                              <span className={`ml-2 font-semibold ${dayUrgency === "red" ? "text-red-400" : "text-amber-400"}`}>· {daysRemaining}d left</span>
+                            )}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
@@ -2603,11 +2880,12 @@ export default function SpendingTracker() {
                     </div>
 
                     <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-                      <div className="bg-gray-800 rounded-lg p-3">
-                        <div className="text-xs text-gray-500 mb-1">Months to Go</div>
-                        <div className={`text-lg font-bold ${isOverdue ? "text-red-400" : "text-white"}`}>
-                          {isOverdue ? "Overdue" : monthsAway}
+                      <div className={`rounded-lg p-3 border ${isOverdue || dayUrgency === "red" ? "bg-red-900/20 border-red-800/40" : dayUrgency === "amber" ? "bg-amber-900/20 border-amber-800/40" : "bg-gray-800 border-transparent"}`}>
+                        <div className="text-xs text-gray-500 mb-1">Time Left</div>
+                        <div className={`text-lg font-bold ${isOverdue || dayUrgency === "red" ? "text-red-400" : dayUrgency === "amber" ? "text-amber-400" : "text-emerald-400"}`}>
+                          {isOverdue ? "Overdue" : daysRemaining !== null ? `${daysRemaining}d` : `${monthsAway}mo`}
                         </div>
+                        {!isOverdue && daysRemaining !== null && <div className="text-xs text-gray-500 mt-0.5">{monthsAway}mo</div>}
                       </div>
                       <div className="bg-gray-800 rounded-lg p-3">
                         <div className="text-xs text-gray-500 mb-1">Still Needed</div>
@@ -2932,6 +3210,12 @@ export default function SpendingTracker() {
                   <input ref={jsonInputRef} type="file" accept=".json" className="hidden"
                     onChange={e => handleImportJSON(e.target.files[0])}/>
                 </div>
+                <div className="mt-2 border-t border-gray-800 pt-3">
+                  <button onClick={() => setShowRulesModal(true)}
+                    className="flex items-center gap-2 text-gray-400 hover:text-indigo-300 text-xs transition-colors">
+                    <Search size={12}/> My categorisation rules{userCatRules.length > 0 ? ` (${userCatRules.length} active)` : ""}
+                  </button>
+                </div>
               </>
             ) : (
               <div className="space-y-4">
@@ -3042,6 +3326,15 @@ export default function SpendingTracker() {
           )}
           onDelete={id => setGoals(prev => prev.filter(g => g.id !== id))}
           onClose={() => { setShowGoalEditor(false); setEditingGoal(null); }}
+        />
+      )}
+
+      {/* ═══════════════ MY RULES MODAL ═══════════════ */}
+      {showRulesModal && (
+        <MyRulesModal
+          rules={userCatRules}
+          onSave={rules => setUserCatRules(rules)}
+          onClose={() => setShowRulesModal(false)}
         />
       )}
 
