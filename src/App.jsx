@@ -573,7 +573,6 @@ function GoalInput({ goal, setGoals, sym }) {
 const GOAL_ICONS = { Shield, Plane, Laptop, Star, Target, Home, Zap, Package, GraduationCap, Wallet, Dumbbell, ShoppingBag };
 
 // ── QUICK-ADD TRANSACTION MODAL ───────────────────────────────────────────────
-const MO_ABBR_QA = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function QuickAddModal({ onSave, onClose, sym }) {
   const [date,   setDate]   = useState(new Date().toISOString().slice(0, 10));
   const [desc,   setDesc]   = useState("");
@@ -588,7 +587,7 @@ function QuickAddModal({ onSave, onClose, sym }) {
   const handleSave = () => {
     if (!desc.trim() || !amount || !date) return;
     const d = new Date(date);
-    const month = `${MO_ABBR_QA[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`;
+    const month = `${MO_ABBR[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`;
     onSave({ date, desc: desc.trim(), cat, amount: Math.abs(parseFloat(amount)), dir, month, manual: true });
     onClose();
   };
@@ -729,6 +728,8 @@ function GoalEditorModal({ goal, onSave, onDelete, onClose }) {
     </div>
   );
 }
+
+const CUTTABLE_CATS = ["Eating Out & Cafes","Entertainment & Nights Out","Shopping","Personal Care","Subscriptions"];
 
 // ── MY RULES MODAL ────────────────────────────────────────────────────────────
 function MyRulesModal({ rules, onSave, onClose }) {
@@ -1217,7 +1218,6 @@ export default function SpendingTracker() {
   }, [affordabilityAmount, affordabilityDate, forecastData, spreadMonths, currentBalance]);
 
   // ── CUT SUGGESTIONS FOR AFFORDABILITY SIMULATOR ─────────────────────────
-  const CUTTABLE_CATS = ["Eating Out & Cafes","Entertainment & Nights Out","Shopping","Personal Care","Subscriptions"];
 
   const cuttableCatAvgs = useMemo(() =>
     CUTTABLE_CATS
@@ -1237,8 +1237,7 @@ export default function SpendingTracker() {
     let bal = currentBalance;
     const parts = affordabilityDate.split("-");
     const pYear = parseInt(parts[0]); const pMon = parseInt(parts[1]);
-    const MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    const purchaseLabel = `${MO[pMon - 1]} '${String(pYear).slice(2)}`;
+    const purchaseLabel = `${MO_ABBR[pMon - 1]} '${String(pYear).slice(2)}`;
     const purchaseIdx = forecastData.findIndex(d => d.month === purchaseLabel);
     const monthlyCharge = parseFloat(affordabilityAmount) / spreadMonths;
     const simMonths = forecastData.map((d, idx) => {
@@ -1313,7 +1312,8 @@ export default function SpendingTracker() {
         const [ms, ys] = goal.date.split(" ");
         monthIdx = MO_LIST.indexOf(ms); yearNum = parseInt(ys);
       }
-      const monthsAway = monthIdx === -1 ? 0 : Math.max(1, (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth()));
+      if (monthIdx === -1) return sum; // no deadline set — skip
+      const monthsAway = Math.max(1, (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth()));
       return sum + (stillNeeded / monthsAway);
     }, 0);
     return Math.ceil(totalProjected + totalMonthlyGoalContrib);
@@ -1370,7 +1370,8 @@ export default function SpendingTracker() {
         const [ms, ys] = goal.date.split(" ");
         monthIdx = MO_LIST.indexOf(ms); yearNum = parseInt(ys);
       }
-      const monthsAway = monthIdx === -1 ? 0 : Math.max(1, (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth()));
+      if (monthIdx === -1) return; // no deadline set — skip
+      const monthsAway = Math.max(1, (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth()));
       const monthlyNeeded = stillNeeded / monthsAway;
       if (monthlyNeeded > 0 && monthlyNeeded > projectedNet * 0.4) {
         items.push({
@@ -1629,7 +1630,7 @@ export default function SpendingTracker() {
     COMFORTABLE: { border:"border-emerald-700", bg:"bg-emerald-900/30", text:"text-emerald-400", label:"COMFORTABLE" },
     TIGHT:       { border:"border-amber-700",   bg:"bg-amber-900/30",   text:"text-amber-400",   label:"PROCEED CAREFULLY" },
     SHORTFALL:   { border:"border-red-700",     bg:"bg-red-900/30",     text:"text-red-400",     label:"NOT YET" },
-  }[v] || {});
+  }[v] ?? { border:"border-gray-700", bg:"bg-gray-800/30", text:"text-gray-400", label:"—" });
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-4" data-theme={themeId}>
